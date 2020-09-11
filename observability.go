@@ -31,32 +31,33 @@ var (
 )
 
 const (
-	SQLInstance = "sql.instance"
-	SQLMethod   = "sql.method"
-	SQLStatus   = "sql.status"
+	sqlInstance = "sql.instance"
+	sqlMethod   = "sql.method"
+	sqlQuery    = "sql.query"
+	sqlStatus   = "sql.status"
 )
 
 var (
-	statusOK    = label.String(SQLStatus, "OK")
-	statusError = label.String(SQLStatus, "Error")
+	statusOK    = label.String(sqlStatus, "OK")
+	statusError = label.String(sqlStatus, "Error")
 
-	methodPing     = label.String(SQLMethod, "ping")
-	methodExec     = label.String(SQLMethod, "exec")
-	methodQuery    = label.String(SQLMethod, "query")
-	methodPrepare  = label.String(SQLMethod, "preapre")
-	methodBegin    = label.String(SQLMethod, "begin")
-	methodCommit   = label.String(SQLMethod, "commit")
-	methodRollback = label.String(SQLMethod, "rollback")
+	methodPing     = label.String(sqlMethod, "ping")
+	methodExec     = label.String(sqlMethod, "exec")
+	methodQuery    = label.String(sqlMethod, "query")
+	methodPrepare  = label.String(sqlMethod, "preapre")
+	methodBegin    = label.String(sqlMethod, "begin")
+	methodCommit   = label.String(sqlMethod, "commit")
+	methodRollback = label.String(sqlMethod, "rollback")
 
-	methodLastInsertID = label.String(SQLMethod, "last_insert_id")
-	methodRowsAffected = label.String(SQLMethod, "rows_affected")
-	methodRowsClose    = label.String(SQLMethod, "rows_close")
-	methodRowsNext     = label.String(SQLMethod, "rows_next")
+	methodLastInsertID = label.String(sqlMethod, "last_insert_id")
+	methodRowsAffected = label.String(sqlMethod, "rows_affected")
+	methodRowsClose    = label.String(sqlMethod, "rows_close")
+	methodRowsNext     = label.String(sqlMethod, "rows_next")
 )
 
-func recordOp(ctx context.Context, method label.KeyValue, start time.Time, options TraceOptions) func(context.Context, error) {
+func startMetric(ctx context.Context, method label.KeyValue, start time.Time, options TraceOptions) func(context.Context, error) {
 	labels := []label.KeyValue{
-		label.String(SQLInstance, options.InstanceName),
+		label.String(sqlInstance, options.InstanceName),
 		method,
 	}
 
@@ -72,11 +73,12 @@ func recordOp(ctx context.Context, method label.KeyValue, start time.Time, optio
 }
 
 func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) (context.Context, trace.Span, func(context.Context, error)) {
-	start := time.Now()
-	metricFunc := recordOp(ctx, method, start, options)
 	if method == methodPing && !options.Ping {
-		return ctx, nil, metricFunc
+		return ctx, nil, func(context.Context, error) {}
 	}
+
+	start := time.Now()
+	endMetric := startMetric(ctx, method, start, options)
 
 	opts := []trace.StartOption{
 		trace.WithSpanKind(trace.SpanKindClient),
@@ -84,12 +86,33 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 	if options.AllowRoot {
 		opts = append(opts, trace.WithNewRoot())
 	}
-	attrs := []label.KeyValue{}
-	if options.Query && len(query) > 0 {
-		attrs = append(attrs, label.String("sql.query", query))
+	attrs := attrsFromSQL(ctx, options, method, query, args)
+	if len(attrs) > 0 {
+		opts = append(opts, trace.WithAttributes(attrs...))
 	}
-	if len(options.DefaultAttributes) > 0 {
-		attrs = append(attrs, options.DefaultAttributes...)
+	spanName := options.SpanNameFormatter(ctx, method.Value.AsString(), query)
+	ctx, span := tracer.Start(ctx, spanName, opts...)
+
+	return ctx, span, func(ctx context.Context, err error) {
+		endMetric(ctx, err)
+
+		if err != nil {
+			span.RecordError(ctx, err)
+		}
+		code, msg := spanStatusFromSQLError(err)
+		span.SetStatus(code, msg)
+		span.End()
+	}
+}
+
+func attrsFromSQL(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) []label.KeyValue {
+	attrs := []label.KeyValue{}
+	if len(options.DefaultLabels) > 0 {
+		attrs = append(attrs, options.DefaultLabels...)
+	}
+
+	if options.Query && len(query) > 0 {
+		attrs = append(attrs, label.String(sqlQuery, query))
 	}
 	if options.QueryParams && args != nil {
 		switch sqlArgs := args.(type) {
@@ -106,24 +129,10 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 				attrs = append(attrs, argToLabel(strconv.Itoa(i), arg))
 			}
 		default:
-			// NOTE: 怎么处理
+			attrs = append(attrs, labelUnknownArgs)
 		}
 	}
-
-	if len(attrs) > 0 {
-		opts = append(opts, trace.WithAttributes(attrs...))
-	}
-	ctx, span := tracer.Start(ctx, method.Value.AsString(), opts...)
-
-	return ctx, span, func(ctx context.Context, err error) {
-		metricFunc(ctx, err)
-		if err != nil {
-			span.RecordError(ctx, err)
-		}
-		code, msg := spanStatusFromSQLError(err)
-		span.SetStatus(code, msg)
-		span.End()
-	}
+	return attrs
 }
 
 func spanStatusFromSQLError(err error) (code codes.Code, msg string) {

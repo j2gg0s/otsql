@@ -1,6 +1,8 @@
 package otsql
 
 import (
+	"context"
+
 	"go.opentelemetry.io/otel/label"
 )
 
@@ -48,9 +50,12 @@ type TraceOptions struct {
 	// calls.
 	RowsClose bool
 
-	// TODO:
-	// DefaultAttributes will be set to each span as default.
-	DefaultAttributes []label.KeyValue
+	// SpanNameFormatter will be called to produce span's name.
+	// Default use method as span name
+	SpanNameFormatter func(ctx context.Context, method string, query string) string
+
+	// DefaultLabels will be set to each span as default.
+	DefaultLabels []label.KeyValue
 
 	// InstanceName identifies database.
 	InstanceName string
@@ -64,7 +69,16 @@ func newTraceOptions(options ...TraceOption) TraceOptions {
 	for _, option := range options {
 		option(&o)
 	}
-	// TODO: instance name
+
+	if o.InstanceName == "" {
+		o.InstanceName = "default"
+	} else {
+		o.DefaultLabels = append(o.DefaultLabels, label.String(sqlInstance, o.InstanceName))
+	}
+
+	if o.SpanNameFormatter == nil {
+		o.SpanNameFormatter = func(_ context.Context, method string, _ string) string { return method }
+	}
 
 	if o.QueryParams && !o.Query {
 		o.QueryParams = false
@@ -77,8 +91,8 @@ func newTraceOptions(options ...TraceOption) TraceOptions {
 func WithOptions(options TraceOptions) TraceOption {
 	return func(o *TraceOptions) {
 		*o = options
-		o.DefaultAttributes = append(
-			[]label.KeyValue(nil), options.DefaultAttributes...,
+		o.DefaultLabels = append(
+			[]label.KeyValue(nil), options.DefaultLabels...,
 		)
 	}
 }
@@ -151,10 +165,10 @@ func WithQueryParams(b bool) TraceOption {
 	}
 }
 
-// WithDefaultAttributes will be set to each span as default.
-func WithDefaultAttributes(attrs ...label.KeyValue) TraceOption {
+// WithDefaultLabels will be set to each span as default.
+func WithDefaultLabels(attrs ...label.KeyValue) TraceOption {
 	return func(o *TraceOptions) {
-		o.DefaultAttributes = attrs
+		o.DefaultLabels = attrs
 	}
 }
 
@@ -169,5 +183,12 @@ func WithDisableErrSkip(b bool) TraceOption {
 func WithInstanceName(instanceName string) TraceOption {
 	return func(o *TraceOptions) {
 		o.InstanceName = instanceName
+	}
+}
+
+// WithSpanNameFormatter sets name for each span.
+func WithSpanNameFormatter(formatter func(context.Context, string, string) string) TraceOption {
+	return func(o *TraceOptions) {
+		o.SpanNameFormatter = formatter
 	}
 }

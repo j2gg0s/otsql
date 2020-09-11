@@ -11,6 +11,7 @@ import (
 var (
 	labelMissingContext = label.String("otsql.warning", "missing upstream context")
 	labelDeprecated     = label.String("otsql.warning", "database driver uses deprecated features")
+	labelUnknownArgs    = label.String("otsql.warning", "unknown args type")
 )
 
 // driver.Conn
