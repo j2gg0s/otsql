@@ -67,8 +67,13 @@ type otConnector struct {
 	options TraceOptions
 }
 
-func (oc otConnector) Connect(ctx context.Context) (driver.Conn, error) {
-	conn, err := oc.dc.Connect(ctx)
+func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error) {
+	ctx, _, endTrace := startTrace(ctx, oc.options, methodCreateConn, "", nil)
+	defer func() {
+		endTrace(ctx, err)
+	}()
+
+	conn, err = oc.dc.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -107,6 +112,12 @@ type otDriver struct {
 }
 
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
+	ctx, span, endTrace := startTrace(context.Background(), d.options, methodCreateConn, "", nil)
+	span.SetAttributes(labelMissingContext)
+	defer func() {
+		endTrace(ctx, err)
+	}()
+
 	conn, err = d.Driver.Open(name)
 	if err != nil {
 		return nil, err

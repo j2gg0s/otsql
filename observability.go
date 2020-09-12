@@ -53,6 +53,8 @@ var (
 	methodRowsAffected = label.String(sqlMethod, "rows_affected")
 	methodRowsClose    = label.String(sqlMethod, "rows_close")
 	methodRowsNext     = label.String(sqlMethod, "rows_next")
+
+	methodCreateConn = label.String(sqlMethod, "create_conn")
 )
 
 func startMetric(ctx context.Context, method label.KeyValue, start time.Time, options TraceOptions) func(context.Context, error) {

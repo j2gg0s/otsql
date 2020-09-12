@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  postgres:
+    image: 'postgres:latest'
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=otsql_db
+      - POSTGRES_USER=otsql_user
+      - POSTGRES_PASSWORD=otsql_password
+  jaeger:
+    image: 'jaegertracing/all-in-one:latest'
+    ports:
+      - 14268:14268
+      - 16686:16686
