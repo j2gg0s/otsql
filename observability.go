@@ -75,6 +75,9 @@ func startMetric(ctx context.Context, method label.KeyValue, start time.Time, op
 }
 
 func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) (context.Context, trace.Span, func(context.Context, error)) {
+	if !options.AllowRoot && !trace.SpanFromContext(ctx).SpanContext().IsValid() {
+		return ctx, nil, func(context.Context, error) {}
+	}
 	if method == methodPing && !options.Ping {
 		return ctx, nil, func(context.Context, error) {}
 	}
@@ -84,9 +87,6 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 
 	opts := []trace.StartOption{
 		trace.WithSpanKind(trace.SpanKindClient),
-	}
-	if options.AllowRoot {
-		opts = append(opts, trace.WithNewRoot())
 	}
 	attrs := attrsFromSQL(ctx, options, method, query, args)
 	if len(attrs) > 0 {

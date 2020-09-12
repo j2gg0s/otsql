@@ -38,7 +38,7 @@ func (c *otConn) Exec(query string, args []driver.Value) (res driver.Result, err
 }
 
 func (c *otConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
-	ctx, _, endTrace := startTrace(context.Background(), c.options, methodExec, query, args)
+	ctx, _, endTrace := startTrace(ctx, c.options, methodExec, query, args)
 	defer func() {
 		endTrace(ctx, err)
 	}()
@@ -70,7 +70,7 @@ func (c *otConn) Query(query string, args []driver.Value) (rows driver.Rows, err
 }
 
 func (c *otConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
-	ctx, _, endTrace := startTrace(context.Background(), c.options, methodQuery, query, args)
+	ctx, _, endTrace := startTrace(ctx, c.options, methodQuery, query, args)
 	defer func() {
 		endTrace(ctx, err)
 	}()

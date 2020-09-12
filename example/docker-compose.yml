@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  mysql:
+    image: 'mysql:latest'
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_DATABASE=otsql_db
+      - MYSQL_USER=otsql_user
+      - MYSQL_PASSWORD=otsql_password
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
   postgres:
     image: 'postgres:latest'
     ports:
