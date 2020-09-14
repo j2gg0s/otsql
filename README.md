@@ -64,8 +64,10 @@ db := sql.OpenDB(
 defer db.Close()
 ```
 
-
 See more specific case in ``example/``.
 
 ## Metric And Span
 TODO
+
+## Test
+We add wrap to [gorm](https://github.com/go-gorm/gorm) and run its test with a forked repo [j2gg0s/gorm](https://github.com/j2gg0s/gorm) .
