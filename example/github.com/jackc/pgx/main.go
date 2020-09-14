@@ -11,7 +11,7 @@ import (
 
 	"github.com/j2gg0s/otsql"
 	"github.com/j2gg0s/otsql/example"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var pgDSN = "postgres://otsql_user:otsql_password@localhost:5432/otsql_db?sslmode=disable"
@@ -22,7 +22,7 @@ func main() {
 	defer flush()
 
 	driverName, err := otsql.Register(
-		"postgres",
+		"pgx",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
 		otsql.WithQueryParams(true),
