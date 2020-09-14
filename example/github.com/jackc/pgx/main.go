@@ -11,6 +11,8 @@ import (
 
 	"github.com/j2gg0s/otsql"
 	"github.com/j2gg0s/otsql/example"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -20,6 +22,14 @@ func main() {
 	example.InitMeter()
 	flush := example.InitTracer()
 	defer flush()
+
+	connConfig, err := pgx.ParseConfig(pgDSN)
+	if err != nil {
+		panic(err)
+	}
+	// Change and register pgx config
+	connConfig.PreferSimpleProtocol = true
+	pgxDSN := stdlib.RegisterConnConfig(connConfig)
 
 	driverName, err := otsql.Register(
 		"pgx",
@@ -32,7 +42,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := sql.Open(driverName, pgDSN)
+	db, err := sql.Open(driverName, pgxDSN)
 	if err != nil {
 		panic(err)
 	}

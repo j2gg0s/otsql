@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"io"
+	"reflect"
 
 	"go.opentelemetry.io/otel/label"
 )
@@ -20,7 +21,7 @@ type otConn struct {
 	options TraceOptions
 }
 
-func (c *otConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
+func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodExec, query, args)
 	span.SetAttributes(labelDeprecated, labelMissingContext)
 	defer func() {
@@ -37,7 +38,7 @@ func (c *otConn) Exec(query string, args []driver.Value) (res driver.Result, err
 	return wrapResult(ctx, res, c.options), nil
 }
 
-func (c *otConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
+func (c otConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
 	ctx, _, endTrace := startTrace(ctx, c.options, methodExec, query, args)
 	defer func() {
 		endTrace(ctx, err)
@@ -53,7 +54,7 @@ func (c *otConn) ExecContext(ctx context.Context, query string, args []driver.Na
 	return wrapResult(ctx, res, c.options), nil
 }
 
-func (c *otConn) Query(query string, args []driver.Value) (rows driver.Rows, err error) {
+func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodQuery, query, args)
 	span.SetAttributes(labelDeprecated, labelMissingContext)
 	defer func() {
@@ -69,7 +70,7 @@ func (c *otConn) Query(query string, args []driver.Value) (rows driver.Rows, err
 	return wrapRows(ctx, rows, c.options), nil
 }
 
-func (c *otConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
+func (c otConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
 	ctx, _, endTrace := startTrace(ctx, c.options, methodQuery, query, args)
 	defer func() {
 		endTrace(ctx, err)
@@ -86,7 +87,7 @@ func (c *otConn) QueryContext(ctx context.Context, query string, args []driver.N
 	return wrapRows(ctx, rows, c.options), nil
 }
 
-func (c *otConn) Ping(ctx context.Context) (err error) {
+func (c otConn) Ping(ctx context.Context) (err error) {
 	ctx, _, traceFunc := startTrace(ctx, c.options, methodPing, "", nil)
 	defer func() {
 		traceFunc(ctx, err)
@@ -100,7 +101,7 @@ func (c *otConn) Ping(ctx context.Context) (err error) {
 	return pinger.Ping(ctx)
 }
 
-func (c *otConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
+func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
 	ctx, span, endTrace := startTrace(ctx, c.options, methodPrepare, query, nil)
 	defer func() {
 		endTrace(ctx, err)
@@ -120,7 +121,7 @@ func (c *otConn) PrepareContext(ctx context.Context, query string) (stmt driver.
 	return wrapStmt(stmt, query, c.options), nil
 }
 
-func (c *otConn) Prepare(query string) (stmt driver.Stmt, err error) {
+func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodPrepare, query, nil)
 	span.SetAttributes(labelMissingContext)
 	defer func() {
@@ -135,7 +136,7 @@ func (c *otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 	return wrapStmt(stmt, query, c.options), nil
 }
 
-func (c *otConn) Begin() (tx driver.Tx, err error) {
+func (c otConn) Begin() (tx driver.Tx, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodBegin, "", nil)
 	defer func() {
 		endTrace(ctx, err)
@@ -149,7 +150,7 @@ func (c *otConn) Begin() (tx driver.Tx, err error) {
 	return wrapTx(ctx, tx, c.options), nil
 }
 
-func (c *otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
+func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
 	ctx, span, endTrace := startTrace(ctx, c.options, methodBegin, "", nil)
 	defer func() {
 		endTrace(ctx, err)
@@ -168,15 +169,16 @@ func (c *otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.
 	return wrapTx(ctx, tx, c.options), nil
 }
 
-func (c *otConn) Close() error {
+func (c otConn) Close() error {
 	return c.Conn.Close()
 }
 
 func wrapConn(conn driver.Conn, options TraceOptions) driver.Conn {
-	return &otConn{
+	return otConn{
 		Conn:    conn,
 		options: options,
 	}
+
 }
 
 // driver.Result
@@ -224,6 +226,15 @@ func wrapResult(ctx context.Context, parent driver.Result, options TraceOptions)
 	}
 }
 
+// withRowsColumnTypeScanType is the same as the driver.RowsColumnTypeScanType
+// interface except it omits the driver.Rows embedded interface.
+// If the original driver.Rows implementation wrapped by ocsql supports
+// RowsColumnTypeScanType we enable the original method implementation in the
+// returned driver.Rows from wrapRows by doing a composition with ocRows.
+type withRowsColumnTypeScanType interface {
+	ColumnTypeScanType(index int) reflect.Type
+}
+
 // driver.Rows
 type otRows struct {
 	driver.Rows
@@ -231,11 +242,11 @@ type otRows struct {
 	options TraceOptions
 }
 
-func (r *otRows) Columns() []string {
+func (r otRows) Columns() []string {
 	return r.Rows.Columns()
 }
 
-func (r *otRows) Close() (err error) {
+func (r otRows) Close() (err error) {
 	if !r.options.RowsClose {
 		return r.Rows.Close()
 	}
@@ -248,7 +259,7 @@ func (r *otRows) Close() (err error) {
 	return r.Rows.Close()
 }
 
-func (r *otRows) Next(dest []driver.Value) (err error) {
+func (r otRows) Next(dest []driver.Value) (err error) {
 	if !r.options.RowsNext {
 		return r.Rows.Next(dest)
 	}
@@ -267,11 +278,20 @@ func (r *otRows) Next(dest []driver.Value) (err error) {
 }
 
 func wrapRows(ctx context.Context, parent driver.Rows, options TraceOptions) driver.Rows {
-	return &otRows{
+	ts, isColumnTypeScan := parent.(driver.RowsColumnTypeScanType)
+	r := otRows{
 		Rows:    parent,
 		ctx:     ctx,
 		options: options,
 	}
+	if isColumnTypeScan {
+		return struct {
+			otRows
+			withRowsColumnTypeScanType
+		}{r, ts}
+	}
+
+	return r
 }
 
 type otStmt struct {
