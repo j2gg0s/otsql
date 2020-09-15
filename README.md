@@ -67,7 +67,18 @@ defer db.Close()
 See more specific case in ``example/``.
 
 ## Metric And Span
-TODO
+| Metric | Search suffix | Tags |
+|--------|---------------|------|
+| Latency in microsecond | go.sql/latency | sql.instance, sql.method, sql.status |
 
+If use ``RecordStats``, all metric supprt tag ``sql.instance``.
+| Metric | Search suffix |
+|--------|---------------|
+| The number of connections currently in use | go.sql.conn.in_use |
+| The number of idle connections | go.sql.conn.idle |
+| The total number of connections wait for | go.sql.conn.wait |
+| The total number of connections closed because of SetMaxIdleConns | go.sql.conn.idle_closed |
+| The total number of connections closed because of SetConnMaxLifetime | go.sql.conn.lifetime_closed |
+| The total time blocked by waiting for a new connection, nanosecond | go.sql.conn.wait_ns |
 ## Test
 We add wrap to [gorm](https://github.com/go-gorm/gorm) and run its test with a forked repo [j2gg0s/gorm](https://github.com/j2gg0s/gorm) .
