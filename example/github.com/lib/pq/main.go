@@ -38,6 +38,13 @@ func main() {
 	}
 	defer db.Close()
 
+	go func() {
+		err := otsql.RecordStats(db, "postgres")
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+
 	{
 		ctx, span := global.TraceProvider().Tracer("github.com/j2gg0s/otsql").Start(
 			context.Background(),
@@ -59,4 +66,7 @@ func main() {
 
 		fmt.Println(currentTime)
 	}
+
+	time.Sleep(10 * time.Second)
+	// visit http://localhost:2222/metrics to access metrics
 }

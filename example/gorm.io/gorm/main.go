@@ -13,6 +13,7 @@ import (
 	_ "github.com/lib/pq"
 	"go.opentelemetry.io/otel/api/global"
 	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/label"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -26,6 +27,7 @@ func OpenMySQL() (db *gorm.DB, err error) {
 		"mysql",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
+		otsql.WithDefaultLabels(label.String("driver", "go-sql-driver/mysql")),
 	)
 	if err != nil {
 		return nil, err
@@ -44,6 +46,7 @@ func OpenPGWithPQ() (db *gorm.DB, err error) {
 		"postgres",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
+		otsql.WithDefaultLabels(label.String("driver", "lib/pq")),
 	)
 	if err != nil {
 		return nil, err
@@ -69,6 +72,7 @@ func OpenPGWithPGX() (db *gorm.DB, err error) {
 		"pgx",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
+		otsql.WithDefaultLabels(label.String("driver", "jackc/pgx")),
 	)
 	if err != nil {
 		return nil, err
@@ -89,18 +93,45 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		db, err := mysqlDB.DB()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if err := otsql.RecordStats(db, "mysql"); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	pgWithPGX, err := OpenPGWithPGX()
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		db, err := pgWithPGX.DB()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if err := otsql.RecordStats(db, "postgres-pgx"); err != nil {
+			fmt.Println(err)
+		}
+	}()
 	pgWithPQ, err := OpenPGWithPQ()
 	if err != nil {
 		panic(err)
 	}
+	go func() {
+		db, err := pgWithPQ.DB()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if err := otsql.RecordStats(db, "postgres-pq"); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	ctx, span := global.TraceProvider().Tracer("github.com/j2gg0s/otsql").Start(
 		context.Background(),
-		"demoTrace",
+		"demo",
 		trace.WithNewRoot())
 	defer span.End()
 
@@ -117,4 +148,7 @@ func main() {
 
 		fmt.Println(currentTime)
 	}
+
+	time.Sleep(10 * time.Second)
+	// curl http://localhost:2222/metrics to get metrics
 }

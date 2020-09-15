@@ -38,6 +38,8 @@ func main() {
 	}
 	defer db.Close()
 
+	go otsql.RecordStats(db, "mysql")
+
 	{
 		ctx, span := global.TraceProvider().Tracer("github.com/j2gg0s/otsql").Start(
 			context.Background(),
@@ -59,4 +61,7 @@ func main() {
 
 		fmt.Println(currentTime)
 	}
+
+	time.Sleep(10 * time.Second)
+	// curl http://localhost:2222/metrics to get metrics
 }

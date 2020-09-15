@@ -19,14 +19,11 @@ var instrumentationName = "github.com/j2gg0s/otsql"
 var tracer = global.TraceProvider().Tracer(instrumentationName)
 
 var (
-	Meter                   = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
+	Meter = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
+
 	LatencyValueRecorder, _ = Meter.NewInt64ValueRecorder(
 		"go.sql/latency",
 		metric.WithDescription("The latency of calls in microsecond"),
-	)
-	ConnectionCounter, _ = Meter.NewInt64Counter(
-		"go.sql/connections",
-		metric.WithDescription("Count of connections in the pool"),
 	)
 )
 
@@ -65,9 +62,9 @@ func startMetric(ctx context.Context, method label.KeyValue, start time.Time, op
 
 	return func(ctx context.Context, err error) {
 		if err != nil {
-			labels = append(labels, statusOK)
-		} else {
 			labels = append(labels, statusError)
+		} else {
+			labels = append(labels, statusOK)
 		}
 
 		LatencyValueRecorder.Record(ctx, time.Since(start).Microseconds(), labels...)
