@@ -59,9 +59,6 @@ type TraceOptions struct {
 
 	// InstanceName identifies database.
 	InstanceName string
-
-	// DisableErrSkip, if set to true, will suppress driver.ErrSkip errors in spans.
-	DisableErrSkip bool
 }
 
 func newTraceOptions(options ...TraceOption) TraceOptions {
@@ -169,13 +166,6 @@ func WithQueryParams(b bool) TraceOption {
 func WithDefaultLabels(attrs ...label.KeyValue) TraceOption {
 	return func(o *TraceOptions) {
 		o.DefaultLabels = attrs
-	}
-}
-
-// WithDisableErrSkip, if set to true, will suppress driver.ErrSkip errors in spans.
-func WithDisableErrSkip(b bool) TraceOption {
-	return func(o *TraceOptions) {
-		o.DisableErrSkip = b
 	}
 }
 
