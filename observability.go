@@ -15,13 +15,13 @@ import (
 	"go.opentelemetry.io/otel/label"
 )
 
-var instrumentationName = "github.com/j2gg0s/otsql"
-var tracer = global.TraceProvider().Tracer(instrumentationName)
-
 var (
-	Meter = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
+	instrumentationName = "github.com/j2gg0s/otsql"
 
-	LatencyValueRecorder, _ = Meter.NewInt64ValueRecorder(
+	tracer = global.TraceProvider().Tracer(instrumentationName)
+	meter  = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
+
+	latencyValueRecorder, _ = meter.NewInt64ValueRecorder(
 		"go.sql/latency",
 		metric.WithDescription("The latency of calls in microsecond"),
 	)
@@ -67,12 +67,12 @@ func startMetric(ctx context.Context, method label.KeyValue, start time.Time, op
 			labels = append(labels, statusOK)
 		}
 
-		LatencyValueRecorder.Record(ctx, time.Since(start).Microseconds(), labels...)
+		latencyValueRecorder.Record(ctx, time.Since(start).Microseconds(), labels...)
 	}
 }
 
 func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) (context.Context, trace.Span, func(context.Context, error)) {
-	if !options.AllowRoot && !trace.SpanFromContext(ctx).SpanContext().IsValid() {
+	if !options.AllowRoot && !trace.SpanFromContext(ctx).IsRecording() {
 		return ctx, nil, func(context.Context, error) {}
 	}
 	if method == methodPing && !options.Ping {

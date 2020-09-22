@@ -44,7 +44,7 @@ func RecordStats(db *sql.DB, instanceName string) (err error) {
 		return nil
 	}
 
-	batchObserver = Meter.NewBatchObserver(func(ctx context.Context, result metric.BatchObserverResult) {
+	batchObserver = meter.NewBatchObserver(func(ctx context.Context, result metric.BatchObserverResult) {
 		now := time.Now()
 		if now.Sub(lastDBStats) < time.Second {
 			return

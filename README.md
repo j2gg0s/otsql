@@ -1,5 +1,8 @@
 # otsql
 
+[![Docs](https://godoc.org/github.com/j2gg0s/otsql?status.svg)](https://pkg.go.dev/github.com/j2gg0s/otsql)
+[![Go Report Card](https://goreportcard.com/badge/github.com/j2gg0s/otsql)](https://goreportcard.com/report/github.com/j2gg0s/otsql)
+
 [OpenTelemetry](https://opentelemetry.io/) SQL database driver wrapper, not official.
 
 Add an otsql wrapper to your existing database code to instrument the
