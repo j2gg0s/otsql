@@ -8,26 +8,10 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/api/metric"
-	"go.opentelemetry.io/otel/label"
 )
 
 var dbs = map[*sql.DB]string{}
 var dbsLock sync.Mutex
-var (
-	batchObserver metric.BatchObserver
-
-	connIdle  metric.Int64UpDownSumObserver
-	connInUse metric.Int64UpDownSumObserver
-
-	connWait           metric.Int64SumObserver
-	connIdleClosed     metric.Int64SumObserver
-	connLifetimeClosed metric.Int64SumObserver
-
-	connWaitDurationNS metric.Int64SumObserver
-
-	lastDBStats time.Time
-	dbStats     sql.DBStats
-)
 
 // RecordStats records database statistics for provided sql.DB.
 // The interval is controlled by meter, default more than 10 seconds.
@@ -44,69 +28,74 @@ func RecordStats(db *sql.DB, instanceName string) (err error) {
 		return nil
 	}
 
-	batchObserver = meter.NewBatchObserver(func(ctx context.Context, result metric.BatchObserverResult) {
+	var stats sql.DBStats
+	last := time.Time{}
+
+	getDBStats := func() sql.DBStats {
 		now := time.Now()
-		if now.Sub(lastDBStats) < time.Second {
-			return
+		if now.Sub(last) > time.Second {
+			stats = db.Stats()
+			last = now
 		}
-		lastDBStats = now
-
-		for db, instanceName := range dbs {
-			dbStats = db.Stats()
-
-			result.Observe(
-				[]label.KeyValue{label.String(sqlInstance, instanceName)},
-
-				connInUse.Observation(int64(dbStats.InUse)),
-				connIdle.Observation(int64(dbStats.Idle)),
-
-				connWait.Observation(dbStats.WaitCount),
-				connIdleClosed.Observation(dbStats.MaxIdleClosed),
-				connLifetimeClosed.Observation(dbStats.MaxLifetimeClosed),
-
-				connWaitDurationNS.Observation(dbStats.WaitDuration.Nanoseconds()),
-			)
-		}
-	})
+		return stats
+	}
 
 	formatter := func(s string) string { return s }
-	if connInUse, err = batchObserver.NewInt64UpDownSumObserver(
+	if _, err = meter.NewInt64UpDownSumObserver(
 		formatter("go.sql.conn.in_use"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().InUse))
+		},
 		metric.WithDescription(fmt.Sprintf("The number of connections currently in use: %s", instanceName)),
 	); err != nil {
 		return err
 	}
 
-	if connIdle, err = batchObserver.NewInt64UpDownSumObserver(
+	if _, err = meter.NewInt64UpDownSumObserver(
 		formatter("go.sql.conn.idle"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().Idle))
+		},
 		metric.WithDescription(fmt.Sprintf("The number of idle connections: %s", instanceName)),
 	); err != nil {
 		return err
 	}
 
-	if connWait, err = batchObserver.NewInt64SumObserver(
+	if _, err = meter.NewInt64SumObserver(
 		formatter("go.sql.conn.wait"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().WaitCount))
+		},
 		metric.WithDescription("The total number of connections wait for"),
 	); err != nil {
 		return err
 	}
 
-	if connIdleClosed, err = batchObserver.NewInt64SumObserver(
+	if _, err = meter.NewInt64SumObserver(
 		formatter("go.sql.conn.idle_closed"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().MaxIdleClosed))
+		},
 		metric.WithDescription("The total number of connections closed because of SetMaxIdleConns"),
 	); err != nil {
 		return err
 	}
 
-	if connLifetimeClosed, err = batchObserver.NewInt64SumObserver(
+	if _, err = meter.NewInt64SumObserver(
 		formatter("go.sql.conn.lifetime_closed"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().MaxLifetimeClosed))
+		},
 		metric.WithDescription("The total number of connections closed because of SetConnMaxLifetime"),
 	); err != nil {
 		return err
 	}
 
-	if connWaitDurationNS, err = batchObserver.NewInt64SumObserver(
+	if _, err = meter.NewInt64SumObserver(
 		formatter("go.sql.conn.wait_ns"),
+		func(_ context.Context, result metric.Int64ObserverResult) {
+			result.Observe(int64(getDBStats().WaitDuration.Nanoseconds()))
+		},
 		metric.WithDescription("The total time blocked by waiting for a new connection, nanosecond."),
 	); err != nil {
 		return err
