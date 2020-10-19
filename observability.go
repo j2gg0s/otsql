@@ -2,7 +2,6 @@ package otsql
 
 import (
 	"context"
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"strconv"
@@ -18,7 +17,7 @@ import (
 var (
 	instrumentationName = "github.com/j2gg0s/otsql"
 
-	tracer = global.TraceProvider().Tracer(instrumentationName)
+	tracer = global.TracerProvider().Tracer(instrumentationName)
 	meter  = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
 
 	latencyValueRecorder, _ = meter.NewInt64ValueRecorder(
@@ -82,7 +81,7 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 	start := time.Now()
 	endMetric := startMetric(ctx, method, start, options)
 
-	opts := []trace.StartOption{
+	opts := []trace.SpanOption{
 		trace.WithSpanKind(trace.SpanKindClient),
 	}
 	attrs := attrsFromSQL(ctx, options, method, query, args)
@@ -137,20 +136,10 @@ func attrsFromSQL(ctx context.Context, options TraceOptions, method label.KeyVal
 func spanStatusFromSQLError(err error) (code codes.Code, msg string) {
 	switch err {
 	case nil:
-		code = codes.OK
+		code = codes.Ok
 		return code, "Success"
-	case driver.ErrSkip:
-		code = codes.Unimplemented
-	case context.Canceled:
-		code = codes.Canceled
-	case context.DeadlineExceeded:
-		code = codes.DeadlineExceeded
-	case sql.ErrNoRows:
-		code = codes.NotFound
-	case sql.ErrTxDone:
-		code = codes.FailedPrecondition
 	default:
-		code = codes.Unknown
+		code = codes.Error
 	}
 	return code, fmt.Sprintf("Error: %v", err)
 }

@@ -129,7 +129,7 @@ func main() {
 		}
 	}()
 
-	ctx, span := global.TraceProvider().Tracer("github.com/j2gg0s/otsql").Start(
+	ctx, span := global.TracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
 		context.Background(),
 		"demo",
 		trace.WithNewRoot())
@@ -149,6 +149,6 @@ func main() {
 		fmt.Println(currentTime)
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(1000 * time.Second)
 	// curl http://localhost:2222/metrics to get metrics
 }

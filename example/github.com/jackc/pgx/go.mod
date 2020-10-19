@@ -10,7 +10,7 @@ require (
 	github.com/lib/pq v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	go.opentelemetry.io/otel v0.11.0
+	go.opentelemetry.io/otel v0.13.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 )
 

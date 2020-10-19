@@ -41,7 +41,7 @@ func main() {
 	go otsql.RecordStats(db, "mysql")
 
 	{
-		ctx, span := global.TraceProvider().Tracer("github.com/j2gg0s/otsql").Start(
+		ctx, span := global.TracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
 			context.Background(),
 			"demoTrace",
 			trace.WithNewRoot())
