@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/j2gg0s/otsql"
@@ -41,7 +41,7 @@ func main() {
 	go otsql.RecordStats(db, "mysql")
 
 	{
-		ctx, span := global.TracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
+		ctx, span := otel.GetTracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
 			context.Background(),
 			"demoTrace",
 			trace.WithNewRoot())

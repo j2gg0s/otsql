@@ -7,18 +7,18 @@ import (
 	"strconv"
 	"time"
 
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/metric"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	instrumentationName = "github.com/j2gg0s/otsql"
 
-	tracer = global.TracerProvider().Tracer(instrumentationName)
-	meter  = global.MeterProvider().Meter("github.com/j2gg0s/otsql")
+	tracer = otel.GetTracerProvider().Tracer(instrumentationName)
+	meter  = otel.GetMeterProvider().Meter("github.com/j2gg0s/otsql")
 
 	latencyValueRecorder, _ = meter.NewInt64ValueRecorder(
 		"go.sql/latency",
@@ -95,7 +95,7 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 		endMetric(ctx, err)
 
 		if err != nil {
-			span.RecordError(ctx, err)
+			span.RecordError(err)
 		}
 		code, msg := spanStatusFromSQLError(err)
 		span.SetStatus(code, msg)

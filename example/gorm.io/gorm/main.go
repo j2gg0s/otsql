@@ -11,9 +11,9 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/trace"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -129,7 +129,7 @@ func main() {
 		}
 	}()
 
-	ctx, span := global.TracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
+	ctx, span := otel.GetTracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
 		context.Background(),
 		"demo",
 		trace.WithNewRoot())

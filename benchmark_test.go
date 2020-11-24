@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout"
 	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -26,7 +26,7 @@ func benchTrace(b *testing.B, ctx context.Context, options ...TraceOption) {
 }
 
 func withParent(b *testing.B) {
-	ctx, _ := global.TracerProvider().
+	ctx, _ := otel.GetTracerProvider().
 		Tracer("github.com/j2gg0s/otsql").
 		Start(context.Background(), "root", trace.WithNewRoot())
 	benchTrace(b, ctx)
@@ -37,21 +37,21 @@ func newRoot(b *testing.B) {
 }
 
 func withQuery(b *testing.B) {
-	ctx, _ := global.TracerProvider().
+	ctx, _ := otel.GetTracerProvider().
 		Tracer("github.com/j2gg0s/otsql").
 		Start(context.Background(), "root", trace.WithNewRoot())
 	benchTrace(b, ctx, WithQuery(true))
 }
 
 func withValue(b *testing.B) {
-	ctx, _ := global.TracerProvider().
+	ctx, _ := otel.GetTracerProvider().
 		Tracer("github.com/j2gg0s/otsql").
 		Start(context.Background(), "root", trace.WithNewRoot())
 	benchTrace(b, ctx, WithQuery(true), WithQueryParams(true))
 }
 
 func withDefaultLabels(b *testing.B) {
-	ctx, _ := global.TracerProvider().
+	ctx, _ := otel.GetTracerProvider().
 		Tracer("github.com/j2gg0s/otsql").
 		Start(context.Background(), "root", trace.WithNewRoot())
 	benchTrace(b, ctx, WithDefaultLabels(label.String("A", "a"), label.String("B", "b")))
