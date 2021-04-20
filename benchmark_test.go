@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/stdout"
-	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -54,7 +54,7 @@ func withDefaultLabels(b *testing.B) {
 	ctx, _ := otel.GetTracerProvider().
 		Tracer("github.com/j2gg0s/otsql").
 		Start(context.Background(), "root", trace.WithNewRoot())
-	benchTrace(b, ctx, WithDefaultLabels(label.String("A", "a"), label.String("B", "b")))
+	benchTrace(b, ctx, WithDefaultAttributes(attribute.String("A", "a"), attribute.String("B", "b")))
 }
 
 func BenchmarkTrace(b *testing.B) {
@@ -77,7 +77,7 @@ func BenchmarkTrace(b *testing.B) {
 	b.Run("With parent span", withParent)
 	b.Run("With query", withQuery)
 	b.Run("With NamedValue args", withValue)
-	b.Run("With default labels", withDefaultLabels)
+	b.Run("With default attributes", withDefaultLabels)
 
 	args = []driver.Value{
 		"j2gg0s",

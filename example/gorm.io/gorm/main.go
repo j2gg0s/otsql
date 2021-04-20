@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"gorm.io/driver/mysql"
@@ -27,7 +27,7 @@ func OpenMySQL() (db *gorm.DB, err error) {
 		"mysql",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
-		otsql.WithDefaultLabels(label.String("driver", "go-sql-driver/mysql")),
+		otsql.WithDefaultAttributes(attribute.String("driver", "go-sql-driver/mysql")),
 	)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func OpenPGWithPQ() (db *gorm.DB, err error) {
 		"postgres",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
-		otsql.WithDefaultLabels(label.String("driver", "lib/pq")),
+		otsql.WithDefaultAttributes(attribute.String("driver", "lib/pq")),
 	)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func OpenPGWithPGX() (db *gorm.DB, err error) {
 		"pgx",
 		otsql.WithAllowRoot(true),
 		otsql.WithQuery(true),
-		otsql.WithDefaultLabels(label.String("driver", "jackc/pgx")),
+		otsql.WithDefaultAttributes(attribute.String("driver", "jackc/pgx")),
 	)
 	if err != nil {
 		return nil, err

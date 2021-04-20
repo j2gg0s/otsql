@@ -113,7 +113,7 @@ type otDriver struct {
 
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), d.options, methodCreateConn, "", nil)
-	span.SetAttributes(labelMissingContext)
+	span.SetAttributes(attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()

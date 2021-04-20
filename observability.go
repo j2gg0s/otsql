@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -18,7 +19,7 @@ var (
 	instrumentationName = "github.com/j2gg0s/otsql"
 
 	tracer = otel.GetTracerProvider().Tracer(instrumentationName)
-	meter  = otel.GetMeterProvider().Meter("github.com/j2gg0s/otsql")
+	meter  = global.GetMeterProvider().Meter("github.com/j2gg0s/otsql")
 
 	latencyValueRecorder, _ = meter.NewInt64ValueRecorder(
 		"go.sql/latency",
@@ -34,43 +35,43 @@ const (
 )
 
 var (
-	statusOK    = label.String(sqlStatus, "OK")
-	statusError = label.String(sqlStatus, "Error")
+	statusOK    = attribute.String(sqlStatus, "OK")
+	statusError = attribute.String(sqlStatus, "Error")
 
-	methodPing     = label.String(sqlMethod, "ping")
-	methodExec     = label.String(sqlMethod, "exec")
-	methodQuery    = label.String(sqlMethod, "query")
-	methodPrepare  = label.String(sqlMethod, "preapre")
-	methodBegin    = label.String(sqlMethod, "begin")
-	methodCommit   = label.String(sqlMethod, "commit")
-	methodRollback = label.String(sqlMethod, "rollback")
+	methodPing     = attribute.String(sqlMethod, "ping")
+	methodExec     = attribute.String(sqlMethod, "exec")
+	methodQuery    = attribute.String(sqlMethod, "query")
+	methodPrepare  = attribute.String(sqlMethod, "preapre")
+	methodBegin    = attribute.String(sqlMethod, "begin")
+	methodCommit   = attribute.String(sqlMethod, "commit")
+	methodRollback = attribute.String(sqlMethod, "rollback")
 
-	methodLastInsertID = label.String(sqlMethod, "last_insert_id")
-	methodRowsAffected = label.String(sqlMethod, "rows_affected")
-	methodRowsClose    = label.String(sqlMethod, "rows_close")
-	methodRowsNext     = label.String(sqlMethod, "rows_next")
+	methodLastInsertID = attribute.String(sqlMethod, "last_insert_id")
+	methodRowsAffected = attribute.String(sqlMethod, "rows_affected")
+	methodRowsClose    = attribute.String(sqlMethod, "rows_close")
+	methodRowsNext     = attribute.String(sqlMethod, "rows_next")
 
-	methodCreateConn = label.String(sqlMethod, "create_conn")
+	methodCreateConn = attribute.String(sqlMethod, "create_conn")
 )
 
-func startMetric(ctx context.Context, method label.KeyValue, start time.Time, options TraceOptions) func(context.Context, error) {
-	labels := []label.KeyValue{
-		label.String(sqlInstance, options.InstanceName),
+func startMetric(_ context.Context, method attribute.KeyValue, start time.Time, options TraceOptions) func(context.Context, error) {
+	attributes := []attribute.KeyValue{
+		attribute.String(sqlInstance, options.InstanceName),
 		method,
 	}
 
 	return func(ctx context.Context, err error) {
 		if err != nil {
-			labels = append(labels, statusError)
+			attributes = append(attributes, statusError)
 		} else {
-			labels = append(labels, statusOK)
+			attributes = append(attributes, statusOK)
 		}
 
-		latencyValueRecorder.Record(ctx, time.Since(start).Microseconds(), labels...)
+		latencyValueRecorder.Record(ctx, time.Since(start).Microseconds(), attributes...)
 	}
 }
 
-func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) (context.Context, trace.Span, func(context.Context, error)) {
+func startTrace(ctx context.Context, options TraceOptions, method attribute.KeyValue, query string, args interface{}) (context.Context, trace.Span, func(context.Context, error)) {
 	if !options.AllowRoot && !trace.SpanFromContext(ctx).IsRecording() {
 		return ctx, nil, func(context.Context, error) {}
 	}
@@ -103,14 +104,14 @@ func startTrace(ctx context.Context, options TraceOptions, method label.KeyValue
 	}
 }
 
-func attrsFromSQL(ctx context.Context, options TraceOptions, method label.KeyValue, query string, args interface{}) []label.KeyValue {
-	attrs := []label.KeyValue{}
-	if len(options.DefaultLabels) > 0 {
-		attrs = append(attrs, options.DefaultLabels...)
+func attrsFromSQL(_ context.Context, options TraceOptions, _ attribute.KeyValue, query string, args interface{}) []attribute.KeyValue {
+	attrs := make([]attribute.KeyValue, 0)
+	if len(options.DefaultAttributes) > 0 {
+		attrs = append(attrs, options.DefaultAttributes...)
 	}
 
 	if options.Query && len(query) > 0 {
-		attrs = append(attrs, label.String(sqlQuery, query))
+		attrs = append(attrs, attribute.String(sqlQuery, query))
 	}
 	if options.QueryParams && args != nil {
 		switch sqlArgs := args.(type) {
@@ -127,7 +128,7 @@ func attrsFromSQL(ctx context.Context, options TraceOptions, method label.KeyVal
 				attrs = append(attrs, argToLabel(strconv.Itoa(i), arg))
 			}
 		default:
-			attrs = append(attrs, labelUnknownArgs)
+			attrs = append(attrs, attributeUnknownArgs)
 		}
 	}
 	return attrs
@@ -144,6 +145,6 @@ func spanStatusFromSQLError(err error) (code codes.Code, msg string) {
 	return code, fmt.Sprintf("Error: %v", err)
 }
 
-func argToLabel(key string, value driver.Value) label.KeyValue {
-	return label.Any(fmt.Sprintf("sql.arg.%s", key), value)
+func argToLabel(key string, value driver.Value) attribute.KeyValue {
+	return attribute.Any(fmt.Sprintf("sql.arg.%s", key), value)
 }

@@ -3,7 +3,7 @@ package otsql
 import (
 	"context"
 
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // TraceOption allows for managing otsql configuration using functional options.
@@ -54,8 +54,8 @@ type TraceOptions struct {
 	// Default use method as span name
 	SpanNameFormatter func(ctx context.Context, method string, query string) string
 
-	// DefaultLabels will be set to each span as default.
-	DefaultLabels []label.KeyValue
+	// DefaultAttributes will be set to each span as default.
+	DefaultAttributes []attribute.KeyValue
 
 	// InstanceName identifies database.
 	InstanceName string
@@ -70,7 +70,7 @@ func newTraceOptions(options ...TraceOption) TraceOptions {
 	if o.InstanceName == "" {
 		o.InstanceName = "default"
 	} else {
-		o.DefaultLabels = append(o.DefaultLabels, label.String(sqlInstance, o.InstanceName))
+		o.DefaultAttributes = append(o.DefaultAttributes, attribute.String(sqlInstance, o.InstanceName))
 	}
 
 	if o.SpanNameFormatter == nil {
@@ -88,8 +88,8 @@ func newTraceOptions(options ...TraceOption) TraceOptions {
 func WithOptions(options TraceOptions) TraceOption {
 	return func(o *TraceOptions) {
 		*o = options
-		o.DefaultLabels = append(
-			[]label.KeyValue(nil), options.DefaultLabels...,
+		o.DefaultAttributes = append(
+			[]attribute.KeyValue(nil), options.DefaultAttributes...,
 		)
 	}
 }
@@ -162,10 +162,10 @@ func WithQueryParams(b bool) TraceOption {
 	}
 }
 
-// WithDefaultLabels will be set to each span as default.
-func WithDefaultLabels(attrs ...label.KeyValue) TraceOption {
+// WithDefaultAttributes will be set to each span as default.
+func WithDefaultAttributes(attrs ...attribute.KeyValue) TraceOption {
 	return func(o *TraceOptions) {
-		o.DefaultLabels = attrs
+		o.DefaultAttributes = attrs
 	}
 }
 
