@@ -11,13 +11,12 @@ import (
 func InitTracer() func() {
 	flush, err := jaeger.InstallNewPipeline(
 		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
-		jaeger.WithProcess(jaeger.Process{
-			ServiceName: "otsql",
-		}),
-		jaeger.WithSDK(&trace.Config{
-			DefaultSampler: trace.AlwaysSample(),
-		}),
+		jaeger.WithProcessFromEnv(),
+		jaeger.WithSDKOptions(
+			trace.WithSampler(trace.AlwaysSample()),
+		),
 	)
+
 	if err != nil {
 		panic(err)
 	}

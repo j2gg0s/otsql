@@ -6,13 +6,13 @@ import (
 	"io"
 	"reflect"
 
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var (
-	labelMissingContext = label.String("otsql.warning", "missing upstream context")
-	labelDeprecated     = label.String("otsql.warning", "database driver uses deprecated features")
-	labelUnknownArgs    = label.String("otsql.warning", "unknown args type")
+	attributeMissingContext = attribute.String("otsql.warning", "missing upstream context")
+	attributeDeprecated     = attribute.String("otsql.warning", "database driver uses deprecated features")
+	attributeUnknownArgs    = attribute.String("otsql.warning", "unknown args type")
 )
 
 // driver.Conn
@@ -23,7 +23,7 @@ type otConn struct {
 
 func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodExec, query, args)
-	span.SetAttributes(labelDeprecated, labelMissingContext)
+	span.SetAttributes(attributeDeprecated, attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()
@@ -56,7 +56,7 @@ func (c otConn) ExecContext(ctx context.Context, query string, args []driver.Nam
 
 func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodQuery, query, args)
-	span.SetAttributes(labelDeprecated, labelMissingContext)
+	span.SetAttributes(attributeDeprecated, attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()
@@ -112,7 +112,7 @@ func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.S
 			return nil, err
 		}
 	} else {
-		span.SetAttributes(labelMissingContext)
+		span.SetAttributes(attributeMissingContext)
 		if stmt, err = c.Conn.Prepare(query); err != nil {
 			return nil, err
 		}
@@ -123,7 +123,7 @@ func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.S
 
 func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), c.options, methodPrepare, query, nil)
-	span.SetAttributes(labelMissingContext)
+	span.SetAttributes(attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()
@@ -142,7 +142,7 @@ func (c otConn) Begin() (tx driver.Tx, err error) {
 		endTrace(ctx, err)
 	}()
 
-	span.SetAttributes(labelDeprecated, labelMissingContext)
+	span.SetAttributes(attributeDeprecated, attributeMissingContext)
 	tx, err = c.Conn.Begin() // nolint
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.T
 			return nil, err
 		}
 	} else {
-		span.SetAttributes(labelDeprecated, labelMissingContext)
+		span.SetAttributes(attributeDeprecated, attributeMissingContext)
 		if tx, err = c.Conn.Begin(); err != nil { // nolint
 			return nil, err
 		}
@@ -199,7 +199,7 @@ func (r otResult) LastInsertId() (id int64, err error) {
 	}()
 	r.ctx = ctx
 	id, err = r.Result.LastInsertId()
-	span.SetAttributes(label.Int64("sql.last_insert_id", id))
+	span.SetAttributes(attribute.Int64("sql.last_insert_id", id))
 	return
 }
 
@@ -214,7 +214,7 @@ func (r otResult) RowsAffected() (cnt int64, err error) {
 	}()
 	r.ctx = ctx
 	cnt, err = r.Result.RowsAffected()
-	span.SetAttributes(label.Int64("sql.rows_affected", cnt))
+	span.SetAttributes(attribute.Int64("sql.rows_affected", cnt))
 	return
 }
 
@@ -302,7 +302,7 @@ type otStmt struct {
 
 func (s otStmt) Exec(args []driver.Value) (res driver.Result, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), s.options, methodExec, s.query, args)
-	span.SetAttributes(labelDeprecated, labelMissingContext)
+	span.SetAttributes(attributeDeprecated, attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()
@@ -330,7 +330,7 @@ func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res 
 
 func (s otStmt) Query(args []driver.Value) (rows driver.Rows, err error) {
 	ctx, span, endTrace := startTrace(context.Background(), s.options, methodQuery, s.query, args)
-	span.SetAttributes(labelDeprecated, labelMissingContext)
+	span.SetAttributes(attributeDeprecated, attributeMissingContext)
 	defer func() {
 		endTrace(ctx, err)
 	}()
