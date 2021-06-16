@@ -5,22 +5,16 @@ import (
 
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	"go.opentelemetry.io/otel/sdk/trace"
 )
 
-func InitTracer() func() {
-	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
-		jaeger.WithProcessFromEnv(),
-		jaeger.WithSDKOptions(
-			trace.WithSampler(trace.AlwaysSample()),
-		),
+func InitTracer() {
+	_, err := jaeger.InstallNewPipeline(
+		jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")),
 	)
 
 	if err != nil {
 		panic(err)
 	}
-	return flush
 }
 
 func InitMeter() {

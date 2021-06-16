@@ -18,8 +18,7 @@ var pgDSN = "postgres://otsql_user:otsql_password@localhost:5432/otsql_db?sslmod
 
 func main() {
 	example.InitMeter()
-	flush := example.InitTracer()
-	defer flush()
+	example.InitTracer()
 
 	driverName, err := otsql.Register(
 		"postgres",

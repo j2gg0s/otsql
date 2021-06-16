@@ -20,8 +20,7 @@ var pgDSN = "postgres://otsql_user:otsql_password@localhost:5432/otsql_db?sslmod
 
 func main() {
 	example.InitMeter()
-	flush := example.InitTracer()
-	defer flush()
+	example.InitTracer()
 
 	connConfig, err := pgx.ParseConfig(pgDSN)
 	if err != nil {

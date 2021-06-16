@@ -18,8 +18,7 @@ var mysqlDSN = "otsql_user:otsql_password@/otsql_db?parseTime=true"
 
 func main() {
 	example.InitMeter()
-	flush := example.InitTracer()
-	defer flush()
+	example.InitTracer()
 
 	driverName, err := otsql.Register(
 		"mysql",

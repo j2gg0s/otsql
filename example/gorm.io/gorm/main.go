@@ -86,8 +86,7 @@ func OpenPGWithPGX() (db *gorm.DB, err error) {
 
 func main() {
 	example.InitMeter()
-	flush := example.InitTracer()
-	defer flush()
+	example.InitTracer()
 
 	mysqlDB, err := OpenMySQL()
 	if err != nil {
