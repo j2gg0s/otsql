@@ -51,7 +51,7 @@ func RecordStats(db *sql.DB, instanceName string) (err error) {
 		return stats
 	}
 
-	batchObserver := meter.NewBatchObserver(func(ctx context.Context, result metric.BatchObserverResult) {
+	batchObserver := meter.NewBatchObserver(func(_ context.Context, result metric.BatchObserverResult) {
 		dbstats := getDBStats()
 
 		result.Observe(

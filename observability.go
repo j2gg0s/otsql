@@ -19,10 +19,10 @@ var (
 	instrumentationName = "github.com/j2gg0s/otsql"
 
 	tracer = otel.GetTracerProvider().Tracer(instrumentationName)
-	meter  = global.GetMeterProvider().Meter("github.com/j2gg0s/otsql")
+	meter  = global.GetMeterProvider().Meter(instrumentationName)
 
 	latencyValueRecorder, _ = meter.NewInt64ValueRecorder(
-		"go.sql/latency",
+		"go.sql.latency",
 		metric.WithDescription("The latency of calls in microsecond"),
 	)
 )
@@ -75,6 +75,7 @@ func startTrace(ctx context.Context, options TraceOptions, method attribute.KeyV
 	if !options.AllowRoot && !trace.SpanFromContext(ctx).IsRecording() {
 		return ctx, nil, func(context.Context, error) {}
 	}
+
 	if method == methodPing && !options.Ping {
 		return ctx, nil, func(context.Context, error) {}
 	}
@@ -138,11 +139,10 @@ func spanStatusFromSQLError(err error) (code codes.Code, msg string) {
 	switch err {
 	case nil:
 		code = codes.Ok
-		return code, "Success"
 	default:
 		code = codes.Error
 	}
-	return code, fmt.Sprintf("Error: %v", err)
+	return code, code.String()
 }
 
 func argToLabel(key string, value driver.Value) attribute.KeyValue {

@@ -5,6 +5,9 @@ import (
 
 	"go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/sdk/resource"
+
+	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
 )
 
 func InitTracer() {
@@ -18,7 +21,7 @@ func InitTracer() {
 }
 
 func InitMeter() {
-	exporter, err := prometheus.InstallNewPipeline(prometheus.Config{})
+	exporter, err := prometheus.InstallNewPipeline(prometheus.Config{}, controller.WithResource(resource.Empty()))
 	if err != nil {
 		panic(err)
 	}

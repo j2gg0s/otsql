@@ -41,17 +41,20 @@ func Register(driverName string, options ...TraceOption) (string, error) {
 	defer regMu.Unlock()
 
 	driverName = driverName + "-j2gg0s-otsql-"
-NewDriverName:
 	for i := 0; i < 100; i++ {
+		included := false
 		regName := driverName + strconv.Itoa(i)
 		for _, name := range sql.Drivers() {
 			if name == regName {
-				continue NewDriverName
+				included = true
+				break
 			}
 		}
 
-		sql.Register(regName, Wrap(dri, options...))
-		return regName, nil
+		if !included {
+			sql.Register(regName, Wrap(dri, options...))
+			return regName, nil
+		}
 	}
 	return "", errors.New("unable to register driver, all slots have been taken")
 }
