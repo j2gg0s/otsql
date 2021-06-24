@@ -26,7 +26,7 @@ var (
 // returns the generated driverName to use when calling sql.Open.
 // It is possible to register multiple wrappers for the same database driver if
 // needing different TraceOptions for different connections.
-func Register(driverName string, options ...TraceOption) (string, error) {
+func Register(driverName string, options ...Option) (string, error) {
 	db, err := sql.Open(driverName, "")
 	if err != nil {
 		return "", err
@@ -42,16 +42,16 @@ func Register(driverName string, options ...TraceOption) (string, error) {
 
 	driverName = driverName + "-j2gg0s-otsql-"
 	for i := 0; i < 100; i++ {
-		included := false
+		exist := false
 		regName := driverName + strconv.Itoa(i)
 		for _, name := range sql.Drivers() {
 			if name == regName {
-				included = true
+				exist = true
 				break
 			}
 		}
 
-		if !included {
+		if !exist {
 			sql.Register(regName, Wrap(dri, options...))
 			return regName, nil
 		}
@@ -60,27 +60,30 @@ func Register(driverName string, options ...TraceOption) (string, error) {
 }
 
 // Wrap takes a SQL driver and wraps it with OpenCensus instrumentation.
-func Wrap(dri driver.Driver, options ...TraceOption) driver.Driver {
-	return wrapDriver(dri, newTraceOptions(options...))
+func Wrap(dri driver.Driver, opts ...Option) driver.Driver {
+	return wrapDriver(dri, newOptions(opts))
 }
 
 type otConnector struct {
-	dc      driver.Connector
-	dri     driver.Driver
-	options TraceOptions
+	dc  driver.Connector
+	dri driver.Driver
+	*Options
 }
 
 func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error) {
-	ctx, _, endTrace := startTrace(ctx, oc.options, methodCreateConn, "", nil)
+	evt := newEvent(oc.InstanceName, MethodCreateConn, "", nil)
+	before(oc.Hooks, ctx, evt)
 	defer func() {
-		endTrace(ctx, err)
+		evt.Err = err
+		after(oc.Hooks, ctx, evt)
 	}()
 
 	conn, err = oc.dc.Connect(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return wrapConn(conn, oc.options), nil
+
+	return wrapConn(conn, oc.Options), nil
 }
 
 func (oc otConnector) Driver() driver.Driver {
@@ -89,36 +92,41 @@ func (oc otConnector) Driver() driver.Driver {
 
 // WrapConnector allows wrapping a database driver.Connector which eliminates
 // the need to register otsql as an available driver.Driver.
-func WrapConnector(dc driver.Connector, options ...TraceOption) driver.Connector {
+func WrapConnector(dc driver.Connector, opts ...Option) driver.Connector {
+	o := newOptions(opts)
 	return &otConnector{
 		dc:      dc,
-		dri:     wrapDriver(dc.Driver(), newTraceOptions(options...)),
-		options: newTraceOptions(options...),
+		dri:     wrapDriver(dc.Driver(), o),
+		Options: o,
 	}
 }
 
 // WrapConn allows an existing driver.Conn to be wrapped by otsql.
-func WrapConn(c driver.Conn, options ...TraceOption) driver.Conn {
-	return wrapConn(c, newTraceOptions(options...))
+func WrapConn(c driver.Conn, opts ...Option) driver.Conn {
+	return wrapConn(c, newOptions(opts))
 }
 
-func wrapDriver(dri driver.Driver, options TraceOptions) driver.Driver {
+func wrapDriver(dri driver.Driver, o *Options) driver.Driver {
 	if _, ok := dri.(driver.DriverContext); ok {
-		return otDriver{Driver: dri, options: options}
+		return otDriver{Driver: dri, Options: o}
 	}
-	return struct{ driver.Driver }{otDriver{Driver: dri, options: options}}
+	return struct{ driver.Driver }{otDriver{Driver: dri, Options: o}}
 }
 
 type otDriver struct {
 	driver.Driver
-	options TraceOptions
+
+	*Options
 }
 
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
-	ctx, span, endTrace := startTrace(context.Background(), d.options, methodCreateConn, "", nil)
-	span.SetAttributes(attributeMissingContext)
+	ctx := context.Background()
+
+	evt := newEvent(d.InstanceName, MethodCreateConn, "", nil)
+	before(d.Hooks, ctx, evt)
 	defer func() {
-		endTrace(ctx, err)
+		evt.Err = err
+		after(d.Hooks, ctx, evt)
 	}()
 
 	conn, err = d.Driver.Open(name)
@@ -126,7 +134,7 @@ func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 		return nil, err
 	}
 
-	return wrapConn(conn, d.options), nil
+	return wrapConn(conn, d.Options), nil
 }
 
 func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
@@ -137,6 +145,6 @@ func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
 	return &otConnector{
 		dc:      connector,
 		dri:     d,
-		options: d.options,
+		Options: d.Options,
 	}, nil
 }
