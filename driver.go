@@ -22,10 +22,10 @@ var (
 )
 
 // Register initializes and registers our otsql wrapped database driver
-// identified by its driverName and using provided TraceOptions. On success it
+// identified by its driverName and using provided Options. On success it
 // returns the generated driverName to use when calling sql.Open.
 // It is possible to register multiple wrappers for the same database driver if
-// needing different TraceOptions for different connections.
+// needing different Options for different connections.
 func Register(driverName string, options ...Option) (string, error) {
 	db, err := sql.Open(driverName, "")
 	if err != nil {
@@ -59,7 +59,7 @@ func Register(driverName string, options ...Option) (string, error) {
 	return "", errors.New("unable to register driver, all slots have been taken")
 }
 
-// Wrap takes a SQL driver and wraps it with OpenCensus instrumentation.
+// Wrap takes a SQL driver and wraps it with hook enabled.
 func Wrap(dri driver.Driver, opts ...Option) driver.Driver {
 	return wrapDriver(dri, newOptions(opts))
 }

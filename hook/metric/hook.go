@@ -34,7 +34,7 @@ func New(opts ...Option) (*Hook, error) {
 
 	err := o.Registerer.Register(o.Latency)
 	if err != nil {
-		if _, ok := err.(*prometheus.AlreadyRegisteredError); !ok {
+		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
 			return nil, err
 		}
 	}

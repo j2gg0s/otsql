@@ -1,22 +1,91 @@
 package metric
 
 import (
+	"context"
 	"database/sql"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
-func Stats(hook *Hook, db *sql.DB, name string, every time.Duration) {
-	// egg or chicken, which is first?
+var sqlInstance = "sql_instance"
+
+// Stats, monitor db connection pool with interval every.
+func Stats(ctx context.Context, db *sql.DB, name string, every time.Duration) {
 	ticker := time.NewTicker(every)
-	for range ticker.C {
-		stats := db.Stats()
+	for {
+		select {
+		case <-ticker.C:
+			stats := db.Stats()
 
-		hook.ConnInUse.WithLabelValues(name).Set(float64(stats.InUse))
-		hook.ConnIdle.WithLabelValues(name).Set(float64(stats.Idle))
+			labels := prometheus.Labels{
+				sqlInstance: name,
+			}
 
-		hook.ConnWait.WithLabelValues(name).Set(float64(stats.WaitCount))
-		hook.ConnIdleClosed.WithLabelValues(name).Set(float64(stats.MaxIdleClosed))
-		hook.ConnLifetimeClosed.WithLabelValues(name).Set(float64(stats.MaxLifetimeClosed))
-		hook.ConnWaitMS.WithLabelValues(name).Set(float64(stats.WaitDuration.Milliseconds()))
+			ConnInUse.With(labels).Set(float64(stats.InUse))
+			ConnIdle.With(labels).Set(float64(stats.Idle))
+
+			ConnWait.With(labels).Set(float64(stats.WaitCount))
+			ConnIdleClosed.With(labels).Set(float64(stats.MaxIdleClosed))
+			ConnLifetimeClosed.With(labels).Set(float64(stats.MaxLifetimeClosed))
+			ConnWaitMS.With(labels).Set(float64(stats.WaitDuration.Milliseconds()))
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		}
 	}
+}
+
+var (
+	ConnInUse = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_in_use",
+			Help: "The number of connections currently in use",
+		},
+		[]string{sqlInstance},
+	)
+	ConnIdle = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_idle",
+			Help: "The number of idle connections",
+		},
+		[]string{sqlInstance},
+	)
+	ConnWait = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_wait",
+			Help: "The total number of connections wait for",
+		},
+		[]string{sqlInstance},
+	)
+	ConnIdleClosed = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_idle_closed",
+			Help: "The total number of connections closed because of SetMaxIdleConns",
+		},
+		[]string{sqlInstance},
+	)
+	ConnLifetimeClosed = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_lifetime_closed",
+			Help: "The total number of connections closed becase of SetConnMaxLifetime",
+		},
+		[]string{sqlInstance},
+	)
+	ConnWaitMS = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_wait_ms",
+			Help: "The total time blocked by waiting for a new connection, millisecond.",
+		},
+		[]string{sqlInstance},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(ConnInUse)
+	prometheus.MustRegister(ConnIdle)
+	prometheus.MustRegister(ConnWait)
+	prometheus.MustRegister(ConnIdleClosed)
+	prometheus.MustRegister(ConnLifetimeClosed)
+	prometheus.MustRegister(ConnWaitMS)
 }

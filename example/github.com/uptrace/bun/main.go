@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/j2gg0s/otsql/example"
+	"github.com/j2gg0s/otsql/hook/metric"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/mysqldialect"
 )
@@ -44,6 +45,7 @@ func main() {
 		panic(err)
 	}
 	defer sqldb.Close()
+	go metric.Stats(ctx, sqldb, "mysql@j2gg0s", 5*time.Second)
 
 	db := bun.NewDB(sqldb, mysqldialect.New())
 	defer db.Close()

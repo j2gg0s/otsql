@@ -3,39 +3,31 @@ package otsql
 // Option allows for managing otsql configuration using functional options.
 type Option func(*Options)
 
-// Options holds configuration of our otsql tracing middleware.
+// Options holds configuration of our otsql hook.
 // By default all options are set to false intentionally when creating a wrapped
 // driver and provide the most sensible default with both performance and
 // security in mind.
 type Options struct {
+	// InstanceName
 	InstanceName string
 
-	// AllowRoot, if set to true, will allow otsql to create root spans in
-	// absence of existing spans or even context.
-	// Default is to not trace otsql calls if no existing parent span is found
-	// in context or when using methods not taking context.
-	AllowRoot bool
-
-	// PingB, if set to true, will enable the creation of spans on PingB requests.
+	// PingB, if set to true, will enable the hook of Ping requests.
 	PingB bool
 
-	// RowsAffectedB, if set to true, will enable the creation of spans on
-	// RowsAffectedB calls.
+	// RowsAffectedB, if set to true, will enable the hook of RowsAffected calls.
 	RowsAffectedB bool
 
-	// LastInsertIdB, if set to true, will enable the creation of spans on
-	// LastInsertIdB calls.
+	// LastInsertIdB, if set to true, will enable the hook LastInsertId calls.
 	LastInsertIdB bool
 
-	// RowsNextB, if set to true, will enable the creation of spans on RowsNextB
-	// calls. This can result in many spans.
+	// RowsNextB, if set to true, will enable the hook of calls.
+	// This can result in many calls.
 	RowsNextB bool
 
-	// RowsCloseB, if set to true, will enable the creation of spans on RowsCloseB
-	// calls.
+	// RowsCloseB, if set to true, will enable the hook of RowsClose calls.
 	RowsCloseB bool
 
-	// Hooks
+	// Hooks, enabled hooks.
 	Hooks []Hook
 }
 
@@ -44,57 +36,58 @@ func newOptions(opts []Option) *Options {
 	for _, option := range opts {
 		option(o)
 	}
+
+	if o.InstanceName == "" {
+		o.InstanceName = "default"
+	}
 	return o
 }
 
-// WithOptions sets our otsql tracing middleware options through a single
-// TraceOptions object.
+// WithOptions sets our otsql options through a single
+// Options object.
 func WithOptions(options Options) Option {
 	return func(o *Options) {
 		*o = options
 	}
 }
 
-// WithPing if set to true, will enable the creation of spans on Ping requests.
+// WithPing if set to true, will enable the hook of Ping requests.
 func WithPing(b bool) Option {
 	return func(o *Options) {
 		o.PingB = b
 	}
 }
 
-// WithRowsNext if set to true, will enable the creation of spans on RowsNext
-// calls. This can result in many spans.
+// WithRowsNext if set to true, will enable of RowsNext calls.
+// This can result in many calls.
 func WithRowsNext(b bool) Option {
 	return func(o *Options) {
 		o.RowsNextB = b
 	}
 }
 
-// WithRowsClose if set to true, will enable the creation of spans on RowsClose
-// calls.
+// WithRowsClose if set to true, will enable the of RowsClose calls.
 func WithRowsClose(b bool) Option {
 	return func(o *Options) {
 		o.RowsCloseB = b
 	}
 }
 
-// WithRowsAffected if set to true, will enable the creation of spans on
-// RowsAffected calls.
+// WithRowsAffected if set to true, will enable the of RowsAffected calls.
 func WithRowsAffected(b bool) Option {
 	return func(o *Options) {
 		o.RowsAffectedB = b
 	}
 }
 
-// WithLastInsertID if set to true, will enable the creation of spans on
-// LastInsertId calls.
+// WithLastInsertID if set to true, will enable the hook of LastInsertId calls.
 func WithLastInsertID(b bool) Option {
 	return func(o *Options) {
 		o.LastInsertIdB = b
 	}
 }
 
-// WithHooks
+// WithHooks set hook.
 func WithHooks(hooks ...Hook) Option {
 	return func(o *Options) {
 		o.Hooks = append(o.Hooks, hooks...)

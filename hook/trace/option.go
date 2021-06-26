@@ -6,17 +6,17 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// Option allows for managing otsql configuration using functional options.
+// Option allows for managing trace configuration using functional options.
 type Option func(*Options)
 
-// Options holds configuration of our otsql tracing middleware.
+// Options holds configuration of our tracing hook.
 // By default all options are set to false intentionally when creating a wrapped
 // driver and provide the most sensible default with both performance and
 // security in mind.
 type Options struct {
-	// AllowRoot, if set to true, will allow otsql to create root spans in
+	// AllowRoot, if set to true, will allow hook to create root spans in
 	// absence of existing spans or even context.
-	// Default is to not trace otsql calls if no existing parent span is found
+	// Default is to not trace calls if no existing parent span is found
 	// in context or when using methods not taking context.
 	AllowRoot bool
 
@@ -61,27 +61,27 @@ type Options struct {
 	InstanceName string
 }
 
-func applyOptions(options []Option) Options {
-	opts := Options{}
-	for _, option := range options {
-		option(&opts)
+func newOptions(opts []Option) *Options {
+	o := &Options{}
+	for _, opt := range opts {
+		opt(o)
 	}
 
-	if opts.SpanNameFormatter == nil {
-		opts.SpanNameFormatter = func(ctx context.Context, method string, query string) string {
+	if o.SpanNameFormatter == nil {
+		o.SpanNameFormatter = func(ctx context.Context, method string, query string) string {
 			return method
 		}
 	}
 
-	if opts.QueryParams && !opts.Query {
-		opts.QueryParams = false
+	if o.QueryParams && !o.Query {
+		o.QueryParams = false
 	}
 
-	return opts
+	return o
 }
 
-// WithOptions sets our otsql tracing middleware options through a single
-// TraceOptions object.
+// WithOptions sets our hook tracing middleware options through a single
+// Options object.
 func WithOptions(options Options) Option {
 	return func(o *Options) {
 		*o = options
@@ -91,9 +91,9 @@ func WithOptions(options Options) Option {
 	}
 }
 
-// WithAllowRoot if set to true, will allow otsql to create root spans in
+// WithAllowRoot if set to true, will allow hook to create root spans in
 // absence of exisiting spans or even context.
-// Default is to not trace otsql calls if no existing parent span is found
+// Default is to not trace sql calls if no existing parent span is found
 // in context or when using methods not taking context.
 func WithAllowRoot(b bool) Option {
 	return func(o *Options) {

@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/j2gg0s/otsql/example"
+	"github.com/j2gg0s/otsql/hook/metric"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+	go metric.Stats(ctx, db, "mysql@j2gg0s", 5*time.Second)
 
 	if err := db.Ping(); err != nil {
 		panic(fmt.Errorf("ping db: %w", err))

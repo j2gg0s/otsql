@@ -18,14 +18,14 @@ const (
 )
 
 type Hook struct {
-	Options
+	*Options
 
 	Tracer trace.Tracer
 }
 
 func New(options ...Option) *Hook {
 	return &Hook{
-		Options: applyOptions(options),
+		Options: newOptions(options),
 		Tracer:  otel.GetTracerProvider().Tracer("github.com/j2gg0s/otsql"),
 	}
 }
