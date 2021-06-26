@@ -64,9 +64,13 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 		trace.WithSpanKind(trace.SpanKindClient),
 	}
 
-	if attrs := hook.attrsFromSQL(evt.Query, evt.Args); len(attrs) > 0 {
-		opts = append(opts, trace.WithAttributes(attrs...))
-	}
+	attrs := hook.attrsFromSQL(evt.Query, evt.Args)
+	attrs = append(
+		attrs,
+		sqlInstance.String(evt.Instance),
+		sqlDatabase.String(evt.Database),
+	)
+	opts = append(opts, trace.WithAttributes(attrs...))
 
 	spanName := hook.SpanNameFormatter(ctx, string(evt.Method), evt.Query)
 	ctx, _ = hook.Tracer.Start(ctx, spanName, opts...)
@@ -137,3 +141,8 @@ func errToCode(err error) codes.Code {
 func argToAttr(k string, v driver.Value) attribute.KeyValue {
 	return attribute.Any(fmt.Sprintf("sql.arg.%s", k), v)
 }
+
+var (
+	sqlInstance = attribute.Key("sql.instance")
+	sqlDatabase = attribute.Key("sql.database")
+)

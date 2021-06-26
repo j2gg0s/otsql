@@ -44,23 +44,27 @@ var (
 )
 
 type Event struct {
-	InstanceName string
-	Method       Method
-	Query        string
-	Args         interface{}
-	BeginAt      time.Time
+	Instance string
+	Database string
+
+	Method  Method
+	Query   string
+	Args    interface{}
+	BeginAt time.Time
 
 	Err error
 
 	CloseFuncs []func(context.Context, error)
 }
 
-func newEvent(name string, method Method, query string, args interface{}) *Event {
+func newEvent(o *Options, method Method, query string, args interface{}) *Event {
 	return &Event{
-		InstanceName: name,
-		Method:       method,
-		Query:        query,
-		Args:         args,
-		BeginAt:      time.Now(),
+		Instance: o.Instance,
+		Database: o.Database,
+
+		Method:  method,
+		Query:   query,
+		Args:    args,
+		BeginAt: time.Now(),
 	}
 }

@@ -140,9 +140,7 @@ func AsyncCronPrint(every time.Duration) {
 }
 
 func Register(name string) (string, error) {
-	instanceName := fmt.Sprintf("%s@j2gg0s", name)
-
-	metricHook, err := metric.New(metric.WithInstanceName(instanceName))
+	metricHook, err := metric.New()
 	if err != nil {
 		return "", fmt.Errorf("new metric hook: %w", err)
 	}
@@ -154,7 +152,6 @@ func Register(name string) (string, error) {
 				trace.WithAllowRoot(true),
 				trace.WithQuery(true),
 				trace.WithQueryParams(true),
-				trace.WithInstanceName(instanceName),
 			),
 			metricHook,
 		),

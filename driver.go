@@ -71,7 +71,7 @@ type otConnector struct {
 }
 
 func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error) {
-	evt := newEvent(oc.InstanceName, MethodCreateConn, "", nil)
+	evt := newEvent(oc.Options, MethodCreateConn, "", nil)
 	before(oc.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -122,7 +122,7 @@ type otDriver struct {
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 	ctx := context.Background()
 
-	evt := newEvent(d.InstanceName, MethodCreateConn, "", nil)
+	evt := newEvent(d.Options, MethodCreateConn, "", nil)
 	before(d.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -134,7 +134,7 @@ func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 		return nil, err
 	}
 
-	return wrapConn(conn, d.Options), nil
+	return wrapConn(conn, addInstance(d.Options, name)), nil
 }
 
 func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
@@ -145,6 +145,17 @@ func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
 	return &otConnector{
 		dc:      connector,
 		dri:     d,
-		Options: d.Options,
+		Options: addInstance(d.Options, name),
 	}, nil
+}
+
+func addInstance(o *Options, dsn string) *Options {
+	instance, database := parseDSN(dsn)
+	if o.Instance == "" && instance != "" {
+		o.Instance = instance
+	}
+	if database != "" {
+		o.Database = database
+	}
+	return o
 }

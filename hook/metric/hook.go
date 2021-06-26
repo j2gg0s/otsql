@@ -23,7 +23,8 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	code := errToCode(evt.Err)
 
 	hook.Latency.WithLabelValues(
-		hook.InstanceName,
+		evt.Instance,
+		evt.Database,
 		string(evt.Method),
 		code.String(),
 	).Observe(float64(time.Since(evt.BeginAt).Microseconds()))

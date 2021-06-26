@@ -6,9 +6,6 @@ type Option func(*Options)
 
 // Options
 type Options struct {
-	// InstanceName
-	InstanceName string
-
 	// Regiterer is prometheus Registerer, default prometheus.DefaultRegisterer
 	Registerer prometheus.Registerer
 
@@ -18,11 +15,8 @@ type Options struct {
 
 func newOptions(opts []Option) *Options {
 	o := &Options{
-		InstanceName: "default",
-
 		Registerer: prometheus.DefaultRegisterer,
-
-		Latency: DefaultLatency,
+		Latency:    DefaultLatency,
 	}
 
 	for _, opt := range opts {
@@ -32,18 +26,14 @@ func newOptions(opts []Option) *Options {
 	return o
 }
 
-func WithInstanceName(instanceName string) Option {
-	return func(o *Options) {
-		o.InstanceName = instanceName
-	}
-}
-
+// WithRegisterer
 func WithRegisterer(registerer prometheus.Registerer) Option {
 	return func(o *Options) {
 		o.Registerer = registerer
 	}
 }
 
+// WithLatency
 func WithLatency(latency *prometheus.HistogramVec) Option {
 	return func(o *Options) {
 		o.Latency = latency
@@ -51,11 +41,16 @@ func WithLatency(latency *prometheus.HistogramVec) Option {
 }
 
 var (
+	sqlInstance = "sql_instance"
+	sqlDatabase = "sql_database"
+	sqlMethod   = "sql_method"
+	sqlStatus   = "sql_status"
+
 	DefaultLatency = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "go_sql_latency",
 			Help: "The latency of sql calls in milliseconds.",
 		},
-		[]string{"sql_instance", "sql_method", "sql_status"},
+		[]string{sqlInstance, sqlDatabase, sqlMethod, sqlStatus},
 	)
 )

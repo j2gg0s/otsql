@@ -8,8 +8,11 @@ type Option func(*Options)
 // driver and provide the most sensible default with both performance and
 // security in mind.
 type Options struct {
-	// InstanceName
-	InstanceName string
+	// Instance, default parse from dsn.
+	Instance string
+
+	// Database, default parse from dsn.
+	Database string
 
 	// PingB, if set to true, will enable the hook of Ping requests.
 	PingB bool
@@ -36,10 +39,6 @@ func newOptions(opts []Option) *Options {
 	for _, option := range opts {
 		option(o)
 	}
-
-	if o.InstanceName == "" {
-		o.InstanceName = "default"
-	}
 	return o
 }
 
@@ -48,6 +47,20 @@ func newOptions(opts []Option) *Options {
 func WithOptions(options Options) Option {
 	return func(o *Options) {
 		*o = options
+	}
+}
+
+// WithInstance sets instance name, default parse from dsn when create conn.
+func WithInstance(name string) Option {
+	return func(o *Options) {
+		o.Instance = name
+	}
+}
+
+// WithDatabase sets instance name, default parse from dsn when create conn.
+func WithDatabaase(name string) Option {
+	return func(o *Options) {
+		o.Database = name
 	}
 }
 

@@ -8,8 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var sqlInstance = "sql_instance"
-
 // Stats, monitor db connection pool with interval every.
 func Stats(ctx context.Context, db *sql.DB, name string, every time.Duration) {
 	ticker := time.NewTicker(every)

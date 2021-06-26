@@ -13,7 +13,7 @@ type otConn struct {
 }
 
 func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
-	evt := newEvent(c.InstanceName, MethodExec, query, args)
+	evt := newEvent(c.Options, MethodExec, query, args)
 	before(c.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -32,7 +32,7 @@ func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err 
 }
 
 func (c otConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
-	evt := newEvent(c.InstanceName, MethodExec, query, args)
+	evt := newEvent(c.Options, MethodExec, query, args)
 	ctx = before(c.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -50,7 +50,7 @@ func (c otConn) ExecContext(ctx context.Context, query string, args []driver.Nam
 }
 
 func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err error) {
-	evt := newEvent(c.InstanceName, MethodQuery, query, args)
+	evt := newEvent(c.Options, MethodQuery, query, args)
 	before(c.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -68,7 +68,7 @@ func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err 
 }
 
 func (c otConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
-	evt := newEvent(c.InstanceName, MethodQuery, query, args)
+	evt := newEvent(c.Options, MethodQuery, query, args)
 	ctx = before(c.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -87,7 +87,7 @@ func (c otConn) QueryContext(ctx context.Context, query string, args []driver.Na
 }
 
 func (c otConn) Ping(ctx context.Context) (err error) {
-	evt := newEvent(c.InstanceName, MethodPing, "", nil)
+	evt := newEvent(c.Options, MethodPing, "", nil)
 	ctx = before(c.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -103,7 +103,7 @@ func (c otConn) Ping(ctx context.Context) (err error) {
 }
 
 func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
-	evt := newEvent(c.InstanceName, MethodPrepare, query, nil)
+	evt := newEvent(c.Options, MethodPrepare, query, nil)
 	ctx = before(c.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -124,7 +124,7 @@ func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.S
 }
 
 func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
-	evt := newEvent(c.InstanceName, MethodPrepare, query, nil)
+	evt := newEvent(c.Options, MethodPrepare, query, nil)
 	before(c.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -140,7 +140,7 @@ func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 }
 
 func (c otConn) Begin() (tx driver.Tx, err error) {
-	evt := newEvent(c.InstanceName, MethodBegin, "", nil)
+	evt := newEvent(c.Options, MethodBegin, "", nil)
 	before(c.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -155,7 +155,7 @@ func (c otConn) Begin() (tx driver.Tx, err error) {
 }
 
 func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
-	evt := newEvent(c.InstanceName, MethodBegin, "", nil)
+	evt := newEvent(c.Options, MethodBegin, "", nil)
 	ctx = before(c.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -197,7 +197,7 @@ func (r otResult) LastInsertId() (id int64, err error) {
 		return r.Result.LastInsertId()
 	}
 
-	evt := newEvent(r.InstanceName, MethodLastInsertId, "", nil)
+	evt := newEvent(r.Options, MethodLastInsertId, "", nil)
 	r.ctx = before(r.Hooks, r.ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -213,7 +213,7 @@ func (r otResult) RowsAffected() (cnt int64, err error) {
 		return r.Result.RowsAffected()
 	}
 
-	evt := newEvent(r.InstanceName, MethodRowsAffected, "", nil)
+	evt := newEvent(r.Options, MethodRowsAffected, "", nil)
 	r.ctx = before(r.Hooks, r.ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -257,7 +257,7 @@ func (r otRows) Close() (err error) {
 		return r.Rows.Close()
 	}
 
-	evt := newEvent(r.InstanceName, MethodRowsClose, "", nil)
+	evt := newEvent(r.Options, MethodRowsClose, "", nil)
 	r.ctx = before(r.Hooks, r.ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -272,7 +272,7 @@ func (r otRows) Next(dest []driver.Value) (err error) {
 		return r.Rows.Next(dest)
 	}
 
-	evt := newEvent(r.InstanceName, MethodRowsNext, "", nil)
+	evt := newEvent(r.Options, MethodRowsNext, "", nil)
 	r.ctx = before(r.Hooks, r.ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -307,7 +307,7 @@ type otStmt struct {
 }
 
 func (s otStmt) Exec(args []driver.Value) (res driver.Result, err error) {
-	evt := newEvent(s.InstanceName, MethodExec, s.query, args)
+	evt := newEvent(s.Options, MethodExec, s.query, args)
 	before(s.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -322,7 +322,7 @@ func (s otStmt) Exec(args []driver.Value) (res driver.Result, err error) {
 }
 
 func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
-	evt := newEvent(s.InstanceName, MethodExec, s.query, args)
+	evt := newEvent(s.Options, MethodExec, s.query, args)
 	ctx = before(s.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -338,7 +338,7 @@ func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res 
 }
 
 func (s otStmt) Query(args []driver.Value) (rows driver.Rows, err error) {
-	evt := newEvent(s.InstanceName, MethodQuery, s.query, args)
+	evt := newEvent(s.Options, MethodQuery, s.query, args)
 	before(s.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -353,7 +353,7 @@ func (s otStmt) Query(args []driver.Value) (rows driver.Rows, err error) {
 }
 
 func (s otStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
-	evt := newEvent(s.InstanceName, MethodQuery, s.query, args)
+	evt := newEvent(s.Options, MethodQuery, s.query, args)
 	ctx = before(s.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
@@ -493,7 +493,7 @@ type otTx struct {
 }
 
 func (t otTx) Commit() (err error) {
-	evt := newEvent(t.InstanceName, MethodCommit, "", nil)
+	evt := newEvent(t.Options, MethodCommit, "", nil)
 	before(t.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
@@ -504,7 +504,7 @@ func (t otTx) Commit() (err error) {
 }
 
 func (t otTx) Rollback() (err error) {
-	evt := newEvent(t.InstanceName, MethodRollback, "", nil)
+	evt := newEvent(t.Options, MethodRollback, "", nil)
 	before(t.Hooks, context.TODO(), evt)
 	defer func() {
 		evt.Err = err
