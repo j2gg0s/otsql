@@ -6,45 +6,36 @@ import (
 	"fmt"
 	"time"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
-
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/j2gg0s/otsql"
 	"github.com/j2gg0s/otsql/example"
+	"github.com/j2gg0s/otsql/hook/metric"
 )
-
-var mysqlDSN = "otsql_user:otsql_password@/otsql_db?parseTime=true"
 
 func main() {
 	example.InitMeter()
 	example.InitTracer()
 
-	driverName, err := otsql.Register(
-		"mysql",
-		otsql.WithAllowRoot(true),
-		otsql.WithQuery(true),
-		otsql.WithQueryParams(true),
-		otsql.WithInstanceName("mysqlInDocker"),
-	)
+	driverName, err := example.Register("mysql")
 	if err != nil {
 		panic(err)
 	}
 
-	db, err := sql.Open(driverName, mysqlDSN)
+	ctx := context.Background()
+
+	db, err := sql.Open(driverName, example.MySQLDSN)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
+	go metric.Stats(ctx, db, "mysql@j2gg0s", 5*time.Second)
 
-	go otsql.RecordStats(db, "mysql")
+	if err := db.Ping(); err != nil {
+		panic(fmt.Errorf("ping db: %w", err))
+	}
+
+	example.AsyncCronPrint(time.Second * 5)
 
 	{
-		ctx, span := otel.GetTracerProvider().Tracer("github.com/j2gg0s/otsql").Start(
-			context.Background(),
-			"demoTrace",
-			trace.WithNewRoot())
-		defer span.End()
 		rows, err := db.QueryContext(ctx, `SELECT CURRENT_TIMESTAMP`)
 		if err != nil {
 			panic(err)
@@ -58,9 +49,12 @@ func main() {
 			}
 		}
 
-		fmt.Println(currentTime)
+		fmt.Printf(
+			"Current: %s, SELECT from db: %s\n",
+			time.Now().String(),
+			currentTime.String())
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(600 * time.Second)
 	// curl http://localhost:2222/metrics to get metrics
 }
