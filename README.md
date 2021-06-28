@@ -31,12 +31,30 @@ import (
 
     "github.com/j2gg0s/otsql"
     "github.com/j2gg0s/otsql/hook/trace"
+    "github.com/j2gg0s/otsql/hook/metric"
+    "github.com/j2gg0s/otsql/hook/log"
     _ "github.com/go-sql-driver/mysql"
 )
 
 var dsn = "postgres://otsql_user:otsql_password@localhost/otsql_db?sslmode=disable"
 
-driverName, err := otsql.Register("mysql", otsql.Hooks(trace.New()))
+metricHook, err := metric.New()
+if err != nil {
+    return "", fmt.Errorf("new metric hook: %w", err)
+}
+
+driverName, err := otsql.Register(
+    name,
+    otsql.WithHooks(
+        trace.New(
+            trace.WithAllowRoot(true),
+            trace.WithQuery(true),
+            trace.WithQueryParams(true),
+        ),
+        metricHook,
+        log.New(),
+    ),
+)
 if err != nil {
     panic(err)
 }
