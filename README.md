@@ -5,9 +5,10 @@
 
 Add an otsql wrapper to your existing database code to hook any sql command.
 
-- Support tracing with [OpenTelemetry](https://opentelemetry.io/) by [otsql/hook/trace](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
-- Support monitor latency and connection pool stats with [Prometheus](https://github.com/prometheus/prometheus)
-by [otsql/hook/metric](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
+-   Support tracing with [OpenTelemetry](https://opentelemetry.io/) by [otsql/hook/trace](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
+-   Support monitor latency and connection pool stats with [Prometheus](https://github.com/prometheus/prometheus)
+    by [otsql/hook/metric](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
+-   Support acess log with [zerolog](https://github.com/rs/zerolog) by [otsql/hook/trace](https://github.com/j2gg0s/otsql/tree/bun/hook/trace).
 
 First version transformed from [ocsql](https://github.com/opencensus-integrations/ocsql).
 
@@ -77,9 +78,11 @@ defer db.Close()
 See more specific case in `example/`.
 
 ## Trace with opentelemetry
+
 otsql support trace with opentelemetry by `hook/trace`.
 
 ## Metric with prometheus
+
 otsql support metric with prometheus by `hook/metric`.
 
 | Metric                 | Search suffix  | Tags                                 |

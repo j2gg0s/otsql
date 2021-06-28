@@ -48,6 +48,7 @@ type Event struct {
 	Database string
 
 	Method  Method
+	Table   string
 	Query   string
 	Args    interface{}
 	BeginAt time.Time

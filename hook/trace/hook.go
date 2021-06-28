@@ -84,12 +84,12 @@ func (h *Hook) After(ctx context.Context, evt *otsql.Event) {
 		return
 	}
 
-	err := evt.Err
+	code, err := codes.Ok, evt.Err
 	if err != nil {
 		span.RecordError(err)
+		code = codes.Error
 	}
-	code := errToCode(err)
-	span.SetStatus(code, code.String())
+	span.SetStatus(code, otsql.ErrToCode(err).String())
 	span.End()
 }
 
@@ -127,15 +127,6 @@ func (hook *Hook) attrsFromSQL(query string, args interface{}) []attribute.KeyVa
 	}
 
 	return attrs
-}
-
-func errToCode(err error) codes.Code {
-	switch err {
-	case nil:
-		return codes.Ok
-	default:
-		return codes.Error
-	}
 }
 
 func argToAttr(k string, v driver.Value) attribute.KeyValue {

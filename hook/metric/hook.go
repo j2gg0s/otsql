@@ -6,7 +6,6 @@ import (
 
 	"github.com/j2gg0s/otsql"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/codes"
 )
 
 type Hook struct {
@@ -20,7 +19,7 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 }
 
 func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
-	code := errToCode(evt.Err)
+	code := otsql.ErrToCode(evt.Err)
 
 	hook.Latency.WithLabelValues(
 		evt.Instance,
@@ -41,13 +40,4 @@ func New(opts ...Option) (*Hook, error) {
 	}
 
 	return &Hook{Options: o}, nil
-}
-
-func errToCode(err error) codes.Code {
-	switch err {
-	case nil:
-		return codes.Ok
-	default:
-		return codes.Error
-	}
 }

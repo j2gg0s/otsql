@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/j2gg0s/otsql"
+	"github.com/j2gg0s/otsql/hook/log"
 	"github.com/j2gg0s/otsql/hook/metric"
 	"github.com/j2gg0s/otsql/hook/trace"
 	"github.com/prometheus/client_golang/prometheus"
@@ -154,6 +155,7 @@ func Register(name string) (string, error) {
 				trace.WithQueryParams(true),
 			),
 			metricHook,
+			log.New(),
 		),
 	)
 	if err != nil {

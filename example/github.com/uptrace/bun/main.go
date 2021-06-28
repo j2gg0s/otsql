@@ -84,7 +84,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("insert user with id(%s), created_at: %s", id, user.CreatedAt.Format(time.RFC3339))
+		fmt.Printf("insert user with id(%s), created_at: %s\n", id, user.CreatedAt.Format(time.RFC3339))
 	}
 
 	{
