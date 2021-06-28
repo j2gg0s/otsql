@@ -50,9 +50,6 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	if evt.Method != "" {
 		e = e.Str("method", string(evt.Method))
 	}
-	if evt.Table != "" {
-		e = e.Str("table", evt.Table)
-	}
 	e = e.Str("code", otsql.ErrToCode(evt.Err).String()).
 		Dur("latency", time.Since(evt.BeginAt))
 

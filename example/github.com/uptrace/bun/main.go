@@ -119,3 +119,14 @@ func main() {
 	time.Sleep(1000 * time.Second)
 	// curl http://localhost:2222/metrics to get metrics
 }
+
+type Hook struct{}
+
+var _ bun.QueryHook = (*Hook)(nil)
+
+func (hook *Hook) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
+	return ctx
+}
+
+func (hook *Hook) AfterQuery(ctx context.COntext, event *bun.QueryEvent) {
+}
