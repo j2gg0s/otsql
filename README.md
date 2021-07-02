@@ -119,4 +119,49 @@ You can use `metric.Stats` to monitor connection pool, all metric supprt tag `sq
 
 ## Test
 
-We add wrap to [gorm](https://github.com/go-gorm/gorm) and run its test with a forked repo [j2gg0s/gorm](https://github.com/j2gg0s/gorm) .
+Test by [bun](https://github.com/uptrace/bun)'s unittest with a special branch [otsql@bun](https://github.com/j2gg0s/bun/tree/otsql).
+
+Test by [gorm](https://github.com/go-gorm/gorm)'s unittest with a special branch [otsql@gorm](https://github.com/j2gg0s/gorm/tree/otsql).
+It also includes example for [pgx](https://github.com/jackc/pgx).
+
+## Benchmark
+
+Run benchmark with [bun](https://github.com/uptrace/bun):
+
+```bash
+goos: darwin
+goarch: amd64
+pkg: github.com/uptrace/bun/internal/dbtest
+cpu: Intel(R) Core(TM) i7-8557U CPU @ 1.70GHz
+BenchmarkSelectOne/pg-8             4579            281209 ns/op
+BenchmarkSelectOne/mysql-8                  4146            292964 ns/op
+BenchmarkSelectOne/sqlite-8                37898             28012 ns/op
+BenchmarkSelectSlice/mysql-8                2874            397543 ns/op
+BenchmarkSelectSlice/sqlite-8               6517            184153 ns/op
+BenchmarkSelectSlice/pg-8                   2806            425935 ns/op
+BenchmarkSelectError/pg-8                   4027            314399 ns/op
+BenchmarkSelectError/mysql-8                2426            476420 ns/op
+BenchmarkSelectError/sqlite-8             166348              7320 ns/op
+PASS
+ok      github.com/uptrace/bun/internal/dbtest  79.494s
+```
+
+Run benchmark with [otsql@bun](https://github.com/j2gg0s/bun/tree/otsql):
+
+```bash
+goos: darwin
+goarch: amd64
+pkg: github.com/uptrace/bun/internal/dbtest
+cpu: Intel(R) Core(TM) i7-8557U CPU @ 1.70GHz
+BenchmarkSelectOne/pg-8             3014            332012 ns/op
+BenchmarkSelectOne/mysql-8                  3382            339056 ns/op
+BenchmarkSelectOne/sqlite-8                25057             46897 ns/op
+BenchmarkSelectSlice/pg-8                   2284            468973 ns/op
+BenchmarkSelectSlice/mysql-8                3074            426501 ns/op
+BenchmarkSelectSlice/sqlite-8               4725            234213 ns/op
+BenchmarkSelectError/pg-8                   3760            337402 ns/op
+BenchmarkSelectError/mysql-8                2647            485405 ns/op
+BenchmarkSelectError/sqlite-8              73551             15706 ns/op
+PASS
+ok      github.com/uptrace/bun/internal/dbtest  67.224s
+```
