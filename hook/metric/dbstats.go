@@ -25,6 +25,7 @@ func Stats(ctx context.Context, db *sql.DB, name string, every time.Duration) {
 
 			ConnWait.With(labels).Set(float64(stats.WaitCount))
 			ConnIdleClosed.With(labels).Set(float64(stats.MaxIdleClosed))
+			ConnIdleTimeClosed.With(labels).Set(float64(stats.MaxIdleTimeClosed))
 			ConnLifetimeClosed.With(labels).Set(float64(stats.MaxLifetimeClosed))
 			ConnWaitMS.With(labels).Set(float64(stats.WaitDuration.Milliseconds()))
 		case <-ctx.Done():
@@ -60,6 +61,13 @@ var (
 		prometheus.GaugeOpts{
 			Name: "go_sql_conn_idle_closed",
 			Help: "The total number of connections closed because of SetMaxIdleConns",
+		},
+		[]string{sqlInstance},
+	)
+	ConnIdleTimeClosed = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_idle_time_closed",
+			Help: "The total number of connections closed because of SetConnMaxIdleTime",
 		},
 		[]string{sqlInstance},
 	)
