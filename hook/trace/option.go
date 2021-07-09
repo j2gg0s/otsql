@@ -50,6 +50,10 @@ type Options struct {
 	// calls.
 	RowsClose bool
 
+	// ResetSession, if set to true, will enable the creation of spans on ResetSession
+	// calls
+	ResetSession bool
+
 	// SpanNameFormatter will be called to produce span's name.
 	// Default use method as span name
 	SpanNameFormatter func(ctx context.Context, method string, query string) string
@@ -137,6 +141,14 @@ func WithRowsAffected(b bool) Option {
 func WithLastInsertId(b bool) Option {
 	return func(o *Options) {
 		o.LastInsertId = b
+	}
+}
+
+// WithResetSession if seto to true, will enable the creation of spans on
+// ResetSession calls.
+func WithResetRession(b bool) Option {
+	return func(o *Options) {
+		o.ResetSession = b
 	}
 }
 

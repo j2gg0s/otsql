@@ -40,8 +40,9 @@ var (
 	MethodRowsClose    Method = "rows_close"
 	MethodRowsNext     Method = "rows_next"
 
-	MethodCreateConn Method = "create_conn"
-	MethodCloseConn  Method = "close_conn"
+	MethodCreateConn   Method = "create_conn"
+	MethodCloseConn    Method = "close_conn"
+	MethodResetSession Method = "reset_session"
 )
 
 type Event struct {

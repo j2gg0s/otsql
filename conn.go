@@ -185,6 +185,23 @@ func (c otConn) Close() (err error) {
 	return c.Conn.Close()
 }
 
+func (c otConn) ResetSession(ctx context.Context) (err error) {
+	if c.ResetSessionB {
+		evt := newEvent(c.Options, MethodResetSession, "", nil)
+		ctx = before(c.Hooks, ctx, evt)
+		defer func() {
+			evt.Err = err
+			after(c.Hooks, ctx, evt)
+		}()
+	}
+
+	if cr, ok := c.Conn.(driver.SessionResetter); ok {
+		return cr.ResetSession(ctx)
+	}
+
+	return nil
+}
+
 func wrapConn(conn driver.Conn, o *Options) driver.Conn {
 	return otConn{
 		Conn:    conn,

@@ -58,6 +58,10 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 		if !hook.RowsClose {
 			return ctx
 		}
+	case otsql.MethodResetSession:
+		if !hook.ResetSession {
+			return ctx
+		}
 	}
 
 	opts := []trace.SpanOption{
