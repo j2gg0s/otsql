@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 )
@@ -71,10 +72,11 @@ type otConnector struct {
 }
 
 func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error) {
-	evt := newEvent(oc.Options, MethodCreateConn, "", nil)
+	evt := newEvent(oc.Options, MethodCreateConn, "", nil, nil)
 	before(oc.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
+		evt.Conn = fmt.Sprintf("%p", &conn)
 		after(oc.Hooks, ctx, evt)
 	}()
 
@@ -122,10 +124,11 @@ type otDriver struct {
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 	ctx := context.Background()
 
-	evt := newEvent(d.Options, MethodCreateConn, "", nil)
+	evt := newEvent(d.Options, MethodCreateConn, "", nil, nil)
 	before(d.Hooks, ctx, evt)
 	defer func() {
 		evt.Err = err
+		evt.Conn = fmt.Sprintf("%p", &conn)
 		after(d.Hooks, ctx, evt)
 	}()
 

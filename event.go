@@ -2,6 +2,7 @@ package otsql
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -57,9 +58,11 @@ type Event struct {
 	Err error
 
 	CloseFuncs []func(context.Context, error)
+
+	Conn string
 }
 
-func newEvent(o *Options, method Method, query string, args interface{}) *Event {
+func newEvent(o *Options, method Method, query string, args interface{}, conn *otConn) *Event {
 	return &Event{
 		Instance: o.Instance,
 		Database: o.Database,
@@ -68,5 +71,7 @@ func newEvent(o *Options, method Method, query string, args interface{}) *Event 
 		Query:   query,
 		Args:    args,
 		BeginAt: time.Now(),
+
+		Conn: fmt.Sprintf("%p", conn),
 	}
 }
