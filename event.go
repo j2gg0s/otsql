@@ -66,6 +66,7 @@ func newEvent(o *Options, conn string, method Method, query string, args interfa
 		Instance: o.Instance,
 		Database: o.Database,
 
+		Conn:    conn,
 		Method:  method,
 		Query:   query,
 		Args:    args,
