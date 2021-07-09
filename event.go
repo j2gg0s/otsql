@@ -40,8 +40,9 @@ var (
 	MethodRowsClose    Method = "rows_close"
 	MethodRowsNext     Method = "rows_next"
 
-	MethodCreateConn Method = "create_conn"
-	MethodCloseConn  Method = "close_conn"
+	MethodCreateConn   Method = "create_conn"
+	MethodCloseConn    Method = "close_conn"
+	MethodResetSession Method = "reset_session"
 )
 
 type Event struct {
@@ -56,13 +57,16 @@ type Event struct {
 	Err error
 
 	CloseFuncs []func(context.Context, error)
+
+	Conn string
 }
 
-func newEvent(o *Options, method Method, query string, args interface{}) *Event {
+func newEvent(o *Options, conn string, method Method, query string, args interface{}) *Event {
 	return &Event{
 		Instance: o.Instance,
 		Database: o.Database,
 
+		Conn:    conn,
 		Method:  method,
 		Query:   query,
 		Args:    args,

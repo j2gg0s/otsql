@@ -44,6 +44,9 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	if evt.Instance != "" {
 		e = e.Str("server", evt.Instance)
 	}
+	if evt.Conn != "" {
+		e = e.Str("conn", evt.Conn)
+	}
 	if evt.Database != "" {
 		e = e.Str("database", evt.Database)
 	}
@@ -99,8 +102,10 @@ func newOptions(opts []Option) *Options {
 			otsql.MethodRowsClose:    zerolog.DebugLevel,
 			otsql.MethodRowsNext:     zerolog.DebugLevel,
 
-			otsql.MethodExec:       zerolog.InfoLevel,
-			otsql.MethodCreateConn: zerolog.InfoLevel,
+			otsql.MethodExec:         zerolog.InfoLevel,
+			otsql.MethodCreateConn:   zerolog.InfoLevel,
+			otsql.MethodCloseConn:    zerolog.InfoLevel,
+			otsql.MethodResetSession: zerolog.DebugLevel,
 		},
 		DefaultLevel: zerolog.InfoLevel,
 

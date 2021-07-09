@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var regMu sync.Mutex
@@ -71,10 +73,13 @@ type otConnector struct {
 }
 
 func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error) {
-	evt := newEvent(oc.Options, MethodCreateConn, "", nil)
+	evt := newEvent(oc.Options, "", MethodCreateConn, "", nil)
 	before(oc.Hooks, ctx, evt)
+
+	id := fmt.Sprintf("%d", time.Now().UnixNano())
 	defer func() {
 		evt.Err = err
+		evt.Conn = id
 		after(oc.Hooks, ctx, evt)
 	}()
 
@@ -83,7 +88,8 @@ func (oc otConnector) Connect(ctx context.Context) (conn driver.Conn, err error)
 		return nil, err
 	}
 
-	return wrapConn(conn, oc.Options), nil
+	return wrapConn(id, conn, oc.Options), nil
+
 }
 
 func (oc otConnector) Driver() driver.Driver {
@@ -103,7 +109,7 @@ func WrapConnector(dc driver.Connector, opts ...Option) driver.Connector {
 
 // WrapConn allows an existing driver.Conn to be wrapped by otsql.
 func WrapConn(c driver.Conn, opts ...Option) driver.Conn {
-	return wrapConn(c, newOptions(opts))
+	return wrapConn(fmt.Sprintf("%d", time.Now().UnixNano()), c, newOptions(opts))
 }
 
 func wrapDriver(dri driver.Driver, o *Options) driver.Driver {
@@ -122,10 +128,13 @@ type otDriver struct {
 func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 	ctx := context.Background()
 
-	evt := newEvent(d.Options, MethodCreateConn, "", nil)
+	evt := newEvent(d.Options, "", MethodCreateConn, "", nil)
 	before(d.Hooks, ctx, evt)
+
+	id := fmt.Sprintf("%d", time.Now().UnixNano())
 	defer func() {
 		evt.Err = err
+		evt.Conn = id
 		after(d.Hooks, ctx, evt)
 	}()
 
@@ -134,7 +143,7 @@ func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 		return nil, err
 	}
 
-	return wrapConn(conn, addInstance(d.Options, name)), nil
+	return wrapConn(id, conn, addInstance(d.Options, name)), nil
 }
 
 func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
