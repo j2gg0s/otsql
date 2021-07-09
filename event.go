@@ -57,9 +57,11 @@ type Event struct {
 	Err error
 
 	CloseFuncs []func(context.Context, error)
+
+	Conn string
 }
 
-func newEvent(o *Options, method Method, query string, args interface{}) *Event {
+func newEvent(o *Options, conn string, method Method, query string, args interface{}) *Event {
 	return &Event{
 		Instance: o.Instance,
 		Database: o.Database,
