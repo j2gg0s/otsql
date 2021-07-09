@@ -30,6 +30,9 @@ type Options struct {
 	// RowsCloseB, if set to true, will enable the hook of RowsClose calls.
 	RowsCloseB bool
 
+	// ResetSessionB, if set to true, will enable the hook of ResetSession calls.
+	ResetSessionB bool
+
 	// Hooks, enabled hooks.
 	Hooks []Hook
 }
@@ -97,6 +100,13 @@ func WithRowsAffected(b bool) Option {
 func WithLastInsertID(b bool) Option {
 	return func(o *Options) {
 		o.LastInsertIdB = b
+	}
+}
+
+// WithResetSession if set to true, will enable the hook of ResetSession calls.
+func WithResetSession(b bool) Option {
+	return func(o *Options) {
+		o.ResetSessionB = b
 	}
 }
 
