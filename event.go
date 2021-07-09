@@ -41,6 +41,7 @@ var (
 	MethodRowsNext     Method = "rows_next"
 
 	MethodCreateConn Method = "create_conn"
+	MethodCloseConn  Method = "close_conn"
 )
 
 type Event struct {

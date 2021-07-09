@@ -174,7 +174,14 @@ func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.T
 	return wrapTx(ctx, tx, c.Options), nil
 }
 
-func (c otConn) Close() error {
+func (c otConn) Close() (err error) {
+	evt := newEvent(c.Options, MethodCloseConn, "", nil)
+	ctx := before(c.Hooks, context.Background(), evt)
+	defer func() {
+		evt.Err = err
+		after(c.Hooks, ctx, evt)
+	}()
+
 	return c.Conn.Close()
 }
 
