@@ -44,6 +44,9 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	if evt.Instance != "" {
 		e = e.Str("server", evt.Instance)
 	}
+	if evt.Conn != "" {
+		e = e.Str("conn", evt.Conn)
+	}
 	if evt.Database != "" {
 		e = e.Str("database", evt.Database)
 	}

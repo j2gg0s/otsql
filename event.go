@@ -63,7 +63,7 @@ type Event struct {
 }
 
 func newEvent(o *Options, method Method, query string, args interface{}, conn *otConn) *Event {
-	return &Event{
+	evt := &Event{
 		Instance: o.Instance,
 		Database: o.Database,
 
@@ -71,7 +71,9 @@ func newEvent(o *Options, method Method, query string, args interface{}, conn *o
 		Query:   query,
 		Args:    args,
 		BeginAt: time.Now(),
-
-		Conn: fmt.Sprintf("%p", conn),
 	}
+	if conn != nil {
+		evt.Conn = fmt.Sprintf("%p", conn)
+	}
+	return evt
 }
