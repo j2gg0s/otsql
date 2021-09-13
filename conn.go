@@ -17,10 +17,10 @@ type otConn struct {
 func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err error) {
 	evt := newEvent(c.Options, c.connID, MethodExec, query, args)
 
-	before(c.Hooks, context.TODO(), evt)
+	ctx := before(c.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(c.Hooks, context.TODO(), evt)
+		after(c.Hooks, ctx, evt)
 	}()
 
 	execer, ok := c.Conn.(driver.Execer) // nolint
@@ -31,7 +31,7 @@ func (c otConn) Exec(query string, args []driver.Value) (res driver.Result, err 
 		return nil, err
 	}
 
-	return wrapResult(context.TODO(), c.connID, res, c.Options), nil
+	return wrapResult(ctx, c.connID, res, c.Options), nil
 }
 
 func (c otConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
@@ -56,10 +56,10 @@ func (c otConn) ExecContext(ctx context.Context, query string, args []driver.Nam
 func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err error) {
 	evt := newEvent(c.Options, c.connID, MethodQuery, query, args)
 
-	before(c.Hooks, context.TODO(), evt)
+	ctx := before(c.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(c.Hooks, context.TODO(), evt)
+		after(c.Hooks, ctx, evt)
 	}()
 
 	queryer, ok := c.Conn.(driver.Queryer) // nolint
@@ -69,7 +69,7 @@ func (c otConn) Query(query string, args []driver.Value) (rows driver.Rows, err 
 	if rows, err = queryer.Query(query, args); err != nil {
 		return nil, err
 	}
-	return wrapRows(context.TODO(), c.connID, rows, c.Options), nil
+	return wrapRows(ctx, c.connID, rows, c.Options), nil
 }
 
 func (c otConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
@@ -133,10 +133,10 @@ func (c otConn) PrepareContext(ctx context.Context, query string) (stmt driver.S
 
 func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 	evt := newEvent(c.Options, c.connID, MethodPrepare, query, nil)
-	before(c.Hooks, context.TODO(), evt)
+	ctx := before(c.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(c.Hooks, context.TODO(), evt)
+		after(c.Hooks, ctx, evt)
 	}()
 
 	stmt, err = c.Conn.Prepare(query)
@@ -149,17 +149,17 @@ func (c otConn) Prepare(query string) (stmt driver.Stmt, err error) {
 
 func (c otConn) Begin() (tx driver.Tx, err error) {
 	evt := newEvent(c.Options, c.connID, MethodBegin, "", nil)
-	before(c.Hooks, context.TODO(), evt)
+	ctx := before(c.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(c.Hooks, context.TODO(), evt)
+		after(c.Hooks, ctx, evt)
 	}()
 
 	tx, err = c.Conn.Begin() // nolint
 	if err != nil {
 		return nil, err
 	}
-	return wrapTx(context.TODO(), c.connID, tx, c.Options), nil
+	return wrapTx(ctx, c.connID, tx, c.Options), nil
 }
 
 func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
@@ -346,17 +346,17 @@ type otStmt struct {
 
 func (s otStmt) Exec(args []driver.Value) (res driver.Result, err error) {
 	evt := newEvent(s.Options, s.connID, MethodExec, s.query, args)
-	before(s.Hooks, context.TODO(), evt)
+	ctx := before(s.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(s.Hooks, context.TODO(), evt)
+		after(s.Hooks, ctx, evt)
 	}()
 
 	res, err = s.Stmt.Exec(args) // nolint
 	if err != nil {
 		return nil, err
 	}
-	return wrapResult(context.TODO(), s.connID, res, s.Options), nil
+	return wrapResult(ctx, s.connID, res, s.Options), nil
 }
 
 func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
@@ -377,17 +377,17 @@ func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res 
 
 func (s otStmt) Query(args []driver.Value) (rows driver.Rows, err error) {
 	evt := newEvent(s.Options, s.connID, MethodQuery, s.query, args)
-	before(s.Hooks, context.TODO(), evt)
+	ctx := before(s.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(s.Hooks, context.TODO(), evt)
+		after(s.Hooks, ctx, evt)
 	}()
 
 	rows, err = s.Stmt.Query(args) // nolint
 	if err != nil {
 		return nil, err
 	}
-	return wrapRows(context.TODO(), s.connID, rows, s.Options), nil
+	return wrapRows(ctx, s.connID, rows, s.Options), nil
 }
 
 func (s otStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
@@ -534,10 +534,10 @@ type otTx struct {
 
 func (t otTx) Commit() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodCommit, "", nil)
-	before(t.Hooks, context.TODO(), evt)
+	ctx := before(t.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(t.Hooks, context.TODO(), evt)
+		after(t.Hooks, ctx, evt)
 	}()
 
 	return t.Tx.Commit()
@@ -545,10 +545,10 @@ func (t otTx) Commit() (err error) {
 
 func (t otTx) Rollback() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodRollback, "", nil)
-	before(t.Hooks, context.TODO(), evt)
+	ctx := before(t.Hooks, context.Background(), evt)
 	defer func() {
 		evt.Err = err
-		after(t.Hooks, context.TODO(), evt)
+		after(t.Hooks, ctx, evt)
 	}()
 
 	return t.Tx.Rollback()
