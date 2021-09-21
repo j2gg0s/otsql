@@ -128,5 +128,5 @@ func (hook *Hook) BeforeQuery(ctx context.Context, event *bun.QueryEvent) contex
 	return ctx
 }
 
-func (hook *Hook) AfterQuery(ctx context.COntext, event *bun.QueryEvent) {
+func (hook *Hook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 }
