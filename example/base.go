@@ -15,14 +15,19 @@ import (
 	"github.com/j2gg0s/otsql/hook/metric"
 	"github.com/j2gg0s/otsql/hook/trace"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"go.opentelemetry.io/otel"
-	exporter "go.opentelemetry.io/otel/exporters/metric/prometheus"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	exporter "go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric/global"
+	export "go.opentelemetry.io/otel/sdk/export/metric"
+	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
+	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
+	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
 	oteltrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv"
-
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 var (
@@ -36,7 +41,7 @@ var (
 )
 
 func InitTracer() {
-	exporter, err := jaeger.NewRawExporter(
+	exp, err := jaeger.New(
 		jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerCollectorEndpoint)),
 	)
 	if err != nil {
@@ -52,24 +57,35 @@ func InitTracer() {
 	}
 
 	tp := oteltrace.NewTracerProvider(
-		oteltrace.WithBatcher(exporter),
+		oteltrace.WithBatcher(exp),
 		oteltrace.WithResource(resource),
 	)
 	otel.SetTracerProvider(tp)
 }
 
 func InitMeter() {
-	exporter, err := exporter.InstallNewPipeline(
-		exporter.Config{
-			Registry: prometheus.DefaultRegisterer.(*prometheus.Registry),
-		},
-		controller.WithResource(resource.Empty()))
+	config := exporter.Config{}
+	ctl := controller.New(
+		processor.New(
+			selector.NewWithHistogramDistribution(
+				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
+			),
+			export.CumulativeExportKindSelector(),
+			processor.WithMemory(true),
+		),
+		controller.WithResource(resource.Empty()),
+	)
+	exp, err := exporter.New(
+		exporter.Config{Registry: prometheus.DefaultRegisterer.(*prometheus.Registry)},
+		ctl,
+	)
 	if err != nil {
 		panic(err)
 	}
+	global.SetMeterProvider(exp.MeterProvider())
 
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%s", prometheusPort), exporter)
+		err := http.ListenAndServe(fmt.Sprintf(":%s", prometheusPort), exp)
 		if err != nil {
 			panic(err)
 		}

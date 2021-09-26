@@ -64,7 +64,7 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 		}
 	}
 
-	opts := []trace.SpanOption{
+	opts := []trace.SpanStartOption{
 		trace.WithSpanKind(trace.SpanKindClient),
 	}
 
@@ -134,7 +134,7 @@ func (hook *Hook) attrsFromSQL(query string, args interface{}) []attribute.KeyVa
 }
 
 func argToAttr(k string, v driver.Value) attribute.KeyValue {
-	return attribute.Any(fmt.Sprintf("sql.arg.%s", k), v)
+	return attribute.String(fmt.Sprintf("sql.arg.%s", k), fmt.Sprintf("%v", v))
 }
 
 var (
