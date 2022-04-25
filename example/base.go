@@ -20,9 +20,9 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	exporter "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric/global"
-	export "go.opentelemetry.io/otel/sdk/export/metric"
 	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
 	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
+	export "go.opentelemetry.io/otel/sdk/metric/export/aggregation"
 	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
 	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -66,11 +66,11 @@ func InitTracer() {
 func InitMeter() {
 	config := exporter.Config{}
 	ctl := controller.New(
-		processor.New(
+		processor.NewFactory(
 			selector.NewWithHistogramDistribution(
 				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
 			),
-			export.CumulativeExportKindSelector(),
+			export.CumulativeTemporalitySelector(),
 			processor.WithMemory(true),
 		),
 		controller.WithResource(resource.Empty()),
