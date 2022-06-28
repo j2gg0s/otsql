@@ -1,12 +1,15 @@
 package otsql
 
-import "google.golang.org/grpc/codes"
+import (
+	"database/sql/driver"
+	"errors"
+
+	"google.golang.org/grpc/codes"
+)
 
 func ErrToCode(err error) codes.Code {
-	switch err {
-	case nil:
+	if err == nil || errors.Is(err, driver.ErrSkip) {
 		return codes.OK
-	default:
-		return codes.Unknown
 	}
+	return codes.Unknown
 }

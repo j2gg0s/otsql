@@ -2,6 +2,8 @@ package log
 
 import (
 	"context"
+	"database/sql/driver"
+	"errors"
 	"time"
 
 	"github.com/j2gg0s/otsql"
@@ -22,7 +24,7 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 
 func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	var e *zerolog.Event
-	if evt.Err != nil {
+	if evt.Err != nil && !errors.Is(evt.Err, driver.ErrSkip) {
 		e = hook.Warn(ctx).Err(evt.Err)
 	} else if time.Since(evt.BeginAt) > hook.Slow {
 		e = hook.Warn(ctx).Bool("slow", true)
@@ -33,6 +35,9 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 		}
 		if hook.GetLevel() <= level {
 			e = hook.WithLevel(ctx, level)
+		}
+		if evt.Err != nil {
+			e.Err(evt.Err)
 		}
 	}
 
