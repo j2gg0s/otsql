@@ -33,10 +33,6 @@ func New(options ...Option) *Hook {
 var _ otsql.Hook = (*Hook)(nil)
 
 func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context {
-	if !hook.AllowRoot && !trace.SpanFromContext(ctx).IsRecording() {
-		return ctx
-	}
-
 	switch evt.Method {
 	case otsql.MethodPing:
 		if !hook.Ping {
