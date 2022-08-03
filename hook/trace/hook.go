@@ -84,6 +84,10 @@ func (h *Hook) After(ctx context.Context, evt *otsql.Event) {
 		return
 	}
 
+	if evt.Err != nil && errors.Is(evt.Err, driver.ErrSkip) && h.IgnoreErrSkip {
+		return
+	}
+	
 	code, err := codes.Ok, evt.Err
 	if err != nil {
 		span.RecordError(err)
