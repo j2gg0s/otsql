@@ -63,6 +63,9 @@ type Options struct {
 
 	// InstanceName identifies database.
 	InstanceName string
+
+	// IgnoreErrSkip, if set to true, the current span will be ignored when event get ErrSkip
+	IgnoreErrSkip bool
 }
 
 func newOptions(opts []Option) *Options {
@@ -189,5 +192,12 @@ func WithInstanceName(instanceName string) Option {
 func WithSpanNameFormatter(formatter func(context.Context, string, string) string) Option {
 	return func(o *Options) {
 		o.SpanNameFormatter = formatter
+	}
+}
+
+// WithIgnoreErrSkip if set to true, the current span will be ignored when event get ErrSkip
+func WithIgnoreErrSkip(b bool) Option {
+	return func(o *Options) {
+		o.IgnoreErrSkip = b
 	}
 }
