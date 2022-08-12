@@ -1,6 +1,9 @@
 package metric
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc/codes"
+)
 
 type Option func(*Options)
 
@@ -11,12 +14,21 @@ type Options struct {
 
 	// Latency histogram, default DefaultLatency
 	Latency *prometheus.HistogramVec
+
+	// ErrToCode, sql error to code
+	ErrToCode func(error) string
 }
 
 func newOptions(opts []Option) *Options {
 	o := &Options{
 		Registerer: prometheus.DefaultRegisterer,
 		Latency:    DefaultLatency,
+		ErrToCode: func(err error) string {
+			if err == nil {
+				return codes.OK.String()
+			}
+			return codes.Unknown.String()
+		},
 	}
 
 	for _, opt := range opts {
