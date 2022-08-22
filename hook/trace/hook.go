@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	sqlQuery = "sql.query"
+	sqlQuery = "db.statement"
 )
 
 type Hook struct {
