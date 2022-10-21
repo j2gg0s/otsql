@@ -162,9 +162,9 @@ func (c otConn) Begin() (tx driver.Tx, err error) {
 	return wrapTx(ctx, c.connID, tx, c.Options), nil
 }
 
-func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
+func (c otConn) BeginTx(spanCtx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
 	evt := newEvent(c.Options, c.connID, MethodBegin, "", nil)
-	ctx = before(c.Hooks, ctx, evt)
+	ctx := before(c.Hooks, spanCtx, evt)
 	defer func() {
 		evt.Err = err
 		after(c.Hooks, ctx, evt)
@@ -179,7 +179,7 @@ func (c otConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.T
 			return nil, err
 		}
 	}
-	return wrapTx(ctx, c.connID, tx, c.Options), nil
+	return wrapTx(spanCtx, c.connID, tx, c.Options), nil
 }
 
 func (c otConn) Close() (err error) {
@@ -534,7 +534,7 @@ type otTx struct {
 
 func (t otTx) Commit() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodCommit, "", nil)
-	ctx := before(t.Hooks, context.Background(), evt)
+	ctx := before(t.Hooks, t.ctx, evt)
 	defer func() {
 		evt.Err = err
 		after(t.Hooks, ctx, evt)
@@ -545,7 +545,7 @@ func (t otTx) Commit() (err error) {
 
 func (t otTx) Rollback() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodRollback, "", nil)
-	ctx := before(t.Hooks, context.Background(), evt)
+	ctx := before(t.Hooks, t.ctx, evt)
 	defer func() {
 		evt.Err = err
 		after(t.Hooks, ctx, evt)
