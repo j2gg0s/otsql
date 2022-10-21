@@ -534,7 +534,7 @@ type otTx struct {
 
 func (t otTx) Commit() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodCommit, "", nil)
-	ctx := before(t.Hooks, context.Background(), evt)
+	ctx := before(t.Hooks, t.ctx, evt)
 	defer func() {
 		evt.Err = err
 		after(t.Hooks, ctx, evt)
@@ -545,7 +545,7 @@ func (t otTx) Commit() (err error) {
 
 func (t otTx) Rollback() (err error) {
 	evt := newEvent(t.Options, t.connID, MethodRollback, "", nil)
-	ctx := before(t.Hooks, context.Background(), evt)
+	ctx := before(t.Hooks, t.ctx, evt)
 	defer func() {
 		evt.Err = err
 		after(t.Hooks, ctx, evt)
