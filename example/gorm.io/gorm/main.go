@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/90poe/otsql/example"
+	"github.com/90poe/otsql/hook/metric"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/j2gg0s/otsql/example"
-	"github.com/j2gg0s/otsql/hook/metric"
 	_ "github.com/lib/pq"
 
 	"gorm.io/driver/mysql"
@@ -48,7 +48,7 @@ func main() {
 	}
 	go func() {
 		db, _ := mysqlDB.DB()
-		metric.Stats(ctx, db, "mysql@j2gg0s", 5*time.Second)
+		metric.Stats(ctx, db, "mysql@90POE", 5*time.Second)
 	}()
 
 	pgDB, err := WithPQ()
@@ -57,7 +57,7 @@ func main() {
 	}
 	go func() {
 		db, _ := pgDB.DB()
-		metric.Stats(ctx, db, "pg@j2gg0s", 5*time.Second)
+		metric.Stats(ctx, db, "pg@90POE", 5*time.Second)
 	}()
 
 	example.AsyncCronPrint(time.Second * 5)
