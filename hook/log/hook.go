@@ -77,7 +77,7 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 		}
 	}
 
-	e.Msg("AccessLog")
+	hook.LogMeta(ctx, e).Msg("AccessLog")
 }
 
 func New(opts ...Option) *Hook {
@@ -98,6 +98,8 @@ type Options struct {
 	Args  bool
 
 	LogErrSkipAsWarn bool
+
+	LogMeta func(context.Context, *zerolog.Event) *zerolog.Event
 }
 
 func newOptions(opts []Option) *Options {
@@ -124,6 +126,8 @@ func newOptions(opts []Option) *Options {
 			otsql.MethodResetSession: zerolog.DebugLevel,
 		},
 		DefaultLevel: zerolog.InfoLevel,
+
+		LogMeta: func(_ context.Context, evt *zerolog.Event) *zerolog.Event { return evt },
 
 		Query: true,
 		Args:  false,
@@ -167,6 +171,13 @@ func WithQuery(b bool) Option {
 func WithArgs(b bool) Option {
 	return func(o *Options) {
 		o.Args = b
+	}
+}
+
+// WithLogMeta extract medata from context
+func WithLogMeta(fn func(context.Context, *zerolog.Event) *zerolog.Event) Option {
+	return func(o *Options) {
+		o.LogMeta = fn
 	}
 }
 
