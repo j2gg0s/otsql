@@ -43,7 +43,7 @@ func Register(driverName string, options ...Option) (string, error) {
 	defer regMu.Unlock()
 
 	driverName = driverName + "-j2gg0s-otsql-"
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1000; i++ {
 		exist := false
 		regName := driverName + strconv.Itoa(i)
 		for _, name := range sql.Drivers() {
